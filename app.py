@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # ── ADK Setup ────────────────────────────────────────────────────────────────
 # Set Google API key for Gemini
 if settings.google_api_key:
-    os.environ.setdefault("GOOGLE_API_KEY", settings.google_api_key)
+    os.environ["GOOGLE_API_KEY"] = settings.google_api_key
 
 from google.adk.agents import Agent
 from google.adk.runners import Runner

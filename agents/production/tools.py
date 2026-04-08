@@ -89,7 +89,7 @@ def generate_voiceover(script_text: str, voice: Optional[str] = None, job_id: st
 
 def generate_scene_images(scene_prompts: list[str], job_id: str = "") -> dict:
     """
-    Generate images for each video scene using Gemini Imagen.
+    Generate images for each video scene using Gemini Imagen via the new google-genai SDK.
 
     Args:
         scene_prompts: List of detailed image prompts (1 per scene, max 6).
@@ -110,35 +110,56 @@ def generate_scene_images(scene_prompts: list[str], job_id: str = "") -> dict:
             "message": f"[DEMO] Image generation skipped. Would generate {len(scene_prompts)} images.",
         }
 
-    if not settings.google_api_key:
+    if not settings.google_api_key and not settings.google_genai_use_vertexai:
         return {"error": "GOOGLE_API_KEY not set", "image_paths": []}
 
     try:
-        import google.generativeai as genai
-        from PIL import Image
-        import io
+        from google import genai
+        from google.genai import types
 
-        genai.configure(api_key=settings.google_api_key)
-        imagen = genai.ImageGenerationModel("imagen-3.0-generate-001")
+        # Initialize the new GenAI client
+        if settings.google_genai_use_vertexai:
+            client = genai.Client(
+                vertexai=True,
+                project=settings.google_cloud_project,
+                location=settings.google_cloud_location,
+            )
+            logger.info("Using Vertex AI for image generation [project=%s]", settings.google_cloud_project)
+        else:
+            client = genai.Client(api_key=settings.google_api_key)
+            logger.info("Using AI Studio for image generation")
 
         image_paths = []
+        # Use a high-quality Imagen model
+        model_id = "imagen-3.0-generate-001" if "imagen-4" not in settings.gemini_model else "imagen-4.0-generate-001"
+        
         for i, prompt in enumerate(scene_prompts[:6]):
             # Ensure 9:16 portrait format for Shorts
             full_prompt = f"{prompt}, vertical 9:16 portrait format, cinematic, high quality"
-            result = imagen.generate_images(
+            
+            logger.info("Generating image %d/%d: %s", i+1, len(scene_prompts), full_prompt[:50] + "...")
+            
+            response = client.models.generate_images(
+                model=model_id,
                 prompt=full_prompt,
-                number_of_images=1,
-                aspect_ratio="9:16",
+                config=types.GenerateImagesConfig(
+                    number_of_images=1,
+                    aspect_ratio="9:16",
+                    safety_filter_level="BLOCK_ONLY_HIGH",
+                )
             )
-            if result.images:
+
+            if response.generated_images:
                 path = str(_WORK_DIR / f"scene_{i}_{job_id or int(time.time())}.png")
-                result.images[0].save(path)
+                # The response contains the image data in .image
+                response.generated_images[0].image.save(path)
                 image_paths.append(path)
-                time.sleep(1)  # Rate limiting
+                # Respect rate limits for small projects
+                time.sleep(2)
 
         return {"image_paths": image_paths, "count": len(image_paths)}
     except Exception as exc:
-        logger.error("Image generation failed: %s", exc)
+        logger.error("Image generation failed: %s", exc, exc_info=True)
         return {"error": str(exc), "image_paths": []}
 
 
