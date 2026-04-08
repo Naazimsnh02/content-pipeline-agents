@@ -1,0 +1,116 @@
+### YouTube Content Pipeline — Sample API Requests
+### Use with VS Code REST Client, JetBrains HTTP Client, or httpx
+
+@base_url = http://localhost:8080
+
+# ── Health & Info ─────────────────────────────────────────────
+
+### Health check
+GET {{base_url}}/health
+
+### API info
+GET {{base_url}}/
+
+# ── Full Pipeline ─────────────────────────────────────────────
+
+### Run full pipeline: tech niche for next Tuesday
+POST {{base_url}}/pipeline
+Content-Type: application/json
+
+{
+  "request": "Create a YouTube Short about the latest AI breakthroughs in healthcare",
+  "niche": "tech",
+  "creator_id": "default",
+  "deadline": "Tuesday"
+}
+
+###
+
+### Run full pipeline: finance niche, no deadline
+POST {{base_url}}/pipeline
+Content-Type: application/json
+
+{
+  "request": "Make a Short about why the stock market is dropping this week",
+  "niche": "finance",
+  "creator_id": "default"
+}
+
+###
+
+### Run full pipeline: fitness niche
+POST {{base_url}}/pipeline
+Content-Type: application/json
+
+{
+  "request": "Create a viral fitness Short about intermittent fasting myths",
+  "niche": "fitness",
+  "creator_id": "default",
+  "deadline": "Saturday"
+}
+
+# ── Chat Interface ────────────────────────────────────────────
+
+### Ask coordinator for topic ideas only
+POST {{base_url}}/chat
+Content-Type: application/json
+
+{
+  "message": "What are the top 5 trending tech topics I should cover this week? Just give me ideas, don't start producing anything.",
+  "user_id": "creator_1"
+}
+
+###
+
+### Research a specific topic
+POST {{base_url}}/chat
+Content-Type: application/json
+
+{
+  "message": "Research the topic 'OpenAI o3 model release' for me. I need key facts and statistics for a YouTube Short.",
+  "user_id": "creator_1"
+}
+
+###
+
+### Script only (no production)
+POST {{base_url}}/chat
+Content-Type: application/json
+
+{
+  "message": "Write me a YouTube Short script about Elon Musk's Grok 3 AI. Use a tech niche style. Don't produce the video, just the script.",
+  "user_id": "creator_1"
+}
+
+###
+
+### Continue conversation (use session_id from previous response)
+POST {{base_url}}/chat
+Content-Type: application/json
+
+{
+  "message": "Can you make that script more aggressive and punchy? Less than 150 words.",
+  "user_id": "creator_1",
+  "session_id": "REPLACE_WITH_SESSION_ID_FROM_PREVIOUS_RESPONSE"
+}
+
+###
+
+### Run analytics
+POST {{base_url}}/chat
+Content-Type: application/json
+
+{
+  "message": "Run analytics for video ID 'dQw4w9WgXcQ' in the tech niche. Give me a performance report.",
+  "user_id": "creator_1"
+}
+
+# ── Job Status ────────────────────────────────────────────────
+
+### Check pipeline job status (replace with real job_id)
+GET {{base_url}}/pipeline/REPLACE_WITH_JOB_ID
+
+###
+
+### Trigger analytics for a job (48h post-publish)
+POST {{base_url}}/pipeline/REPLACE_WITH_JOB_ID/analytics?youtube_video_id=dQw4w9WgXcQ&niche=tech

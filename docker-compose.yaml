@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+
+  # ── Main pipeline API (all agents in one container) ──────────────────────
+  pipeline-api:
+    build: .
+    container_name: content-pipeline-api
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENV=development
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    volumes:
+      - .:/app                          # Hot reload in dev
+      - /tmp/content_pipeline:/tmp/content_pipeline
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── ADK Web UI (optional: for interactive testing) ────────────────────────
+  # Uncomment to use the ADK web chat interface locally:
+  # adk-web:
+  #   build: .
+  #   container_name: adk-web-ui
+  #   ports:
+  #     - "8000:8000"
+  #   command: adk web agents/coordinator --port 8000
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - PYTHONPATH=/app
+  #   depends_on:
+  #     - pipeline-api
+
+networks:
+  default:
+    name: content-pipeline-network
