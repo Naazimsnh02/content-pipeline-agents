@@ -22,7 +22,7 @@ class AnalyticsInput(BaseModel):
 
 root_agent = Agent(
     name="analytics_agent",
-    model=settings.gemini_model,
+    model=settings.active_model,
     input_schema=AnalyticsInput,
     description=(
         "Post-publish analytics agent. Reads YouTube video engagement metrics, "

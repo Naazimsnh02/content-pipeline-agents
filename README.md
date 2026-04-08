@@ -1,8 +1,24 @@
-# Hermes — Autonomous YouTube Content Pipeline
+# 🌌 Hermes — Autonomous YouTube Content Pipeline
 
-> **Autonomous Multi-Agent System** | Gemini 3 Flash · Google ADK · Cloud Run · Firestore
+[![Gen AI Academy APAC Edition](https://img.shields.io/badge/Gen%20AI%20Academy%20APAC%20Edition-Submission-blue)](https://lablab.ai/)
+[![GCP Deployment](https://img.shields.io/badge/GCP-Cloud%20Run-blue?logo=google-cloud&logoColor=white)](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app)
+[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Gemini 3 Flash](https://img.shields.io/badge/Model-Gemini%203%20Flash-orange?logo=google-gemini)](https://deepmind.google/technologies/gemini/)
 
-Hermes is a production-grade multi-agent content pipeline that transforms simple natural-language directives — like _"Create a YouTube Short about the psychological impact of social media"_ — into a fully researched, scripted, produced, and scheduled video, entirely without human intervention.
+> **Autonomous Multi-Agent System** | Built for the **Gen AI Academy APAC Edition** hackathon.
+>
+> Hermes is a production-grade multi-agent content pipeline that transforms simple natural-language directives into a fully researched, scripted, produced, and scheduled video using **Gemini 3 Flash** and the **Google Agent Development Kit (ADK)**.
+
+---
+
+## ✨ System Features
+
+- 🧠 **Autonomous Orchestration**: Powered by Google's **Agent Development Kit (ADK)** for complex task decomposition.
+- 📡 **Trend Discovery**: Real-time trending topic identification via Google Trends and HackerNews.
+- 🔍 **Deep Synthesis**: Fact-checked research briefs generated from multi-source web scraping.
+- 🎬 **Automated Media Production**: End-to-end generation of voiceovers, visuals (Imagen), and video assembly.
+- 📅 **Intelligent Scheduling**: Dynamic posting time optimization based on channel analytics.
+- 🔄 **Performance Feedback**: Closed-loop analytics system that optimizes future content based on historical KPIs.
 
 ---
 
@@ -113,12 +129,16 @@ Analytics data is not just stored — it is actively used to improve the system:
 | **Framework** | **Google ADK** (Agent Development Kit) |
 | **Infrastructure** | Google Cloud Run (Services + Jobs) |
 | **Database** | Cloud Firestore + Google Cloud Storage |
-| **Media** | Edge TTS / ElevenLabs + Gemini Imagen |
+| **Media Logic** | Edge TTS / ElevenLabs + Gemini Imagen + ffmpeg |
 | **Research** | Tavily, Firecrawl, DuckDuckGo |
 
 ---
 
 ## Setup & Deployment
+
+### 🌎 Live Links
+- **Interactive Dashboard**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app)
+- **API Health**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health)
 
 ### Local Quickstart
 
@@ -137,24 +157,17 @@ Analytics data is not just stored — it is actively used to improve the system:
    ```
    Access the **Hermes Dashboard** at `http://localhost:8080/app`.
 
-### Deployment to Cloud Run
+---
 
-**Automated Deployment**:
-```bash
-chmod +x deploy.sh
-./deploy.sh --project YOUR_PROJECT_ID
-```
+## 🗺 Roadmap
 
-**Manual Deployment Steps**:
-1. **Build**: `gcloud builds submit --tag gcr.io/PROJECT_ID/hermes`
-2. **Deploy Service**: `gcloud run deploy hermes --image gcr.io/PROJECT_ID/hermes --memory 2Gi --timeout 3600 --allow-unauthenticated`
-3. **Deploy Analytics Job**: `gcloud run jobs create analytics-agent --image gcr.io/PROJECT_ID/hermes --command python --args "agents/analytics/run_job.py"`
+- [ ] **Character Consistency**: Implementing Stable Diffusion LoRA integration for mascot consistency.
+- [ ] **Multi-Platform**: Support for TikTok and Instagram Reels publishing.
+- [ ] **Microservice Migration**: Decoupling agents into independent Cloud Run instances for extreme scaling.
+- [ ] **Voice Cloning**: Native support for Qwen2-Audio based voice cloning in the Script Agent.
 
 ---
 
-## Scaling to Microservices
+## 📄 License
+Released under the **MIT License**. Created with ❤️ for the **Gen AI Academy APAC Edition**.
 
-Each agent is designed as a standalone module. To convert to true microservices:
-1. Assign a unique `Dockerfile` to each agent folder.
-2. Update the **Coordinator Agent** `AgentTool` definitions to use HTTP endpoints instead of direct function calls.
-3. The monorepo structure allows this transition in ~5 minutes per agent.

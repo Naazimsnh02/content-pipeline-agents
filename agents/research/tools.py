@@ -51,6 +51,7 @@ def web_search(query: str, max_results: int = 6) -> dict:
 
     # Fallback: DuckDuckGo
     try:
+        logger.info("Performing DDG search: %s", query)
         with DDGS() as ddgs:
             raw = list(ddgs.text(query, max_results=max_results))
         results = [
@@ -62,6 +63,7 @@ def web_search(query: str, max_results: int = 6) -> dict:
             }
             for r in raw
         ]
+        logger.info("DDG returned %d results", len(results))
         return {"results": results, "source": "duckduckgo"}
     except Exception as exc:
         logger.error("DDG search failed: %s", exc)
@@ -87,7 +89,9 @@ def deep_web_search(query: str) -> dict:
         f"{query} expert opinion impact",
     ]
 
-    for q in queries:
+    logger.info("Deep web search started for: %s", query)
+    for i, q in enumerate(queries):
+        logger.info("Executing angle search %d/%d: %s", i+1, len(queries), q)
         result = web_search(q, max_results=4)
         all_results.extend(result.get("results", []))
 
@@ -99,6 +103,7 @@ def deep_web_search(query: str) -> dict:
             seen_urls.add(r["url"])
             unique_results.append(r)
 
+    logger.info("Deep web search complete. Found %d unique results across %d angles.", len(unique_results), len(queries))
     return {
         "results": unique_results[:12],
         "query": query,

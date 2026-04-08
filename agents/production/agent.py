@@ -26,7 +26,7 @@ class ProductionInput(BaseModel):
 
 root_agent = Agent(
     name="production_agent",
-    model=settings.gemini_model,
+    model=settings.active_model,
     input_schema=ProductionInput,
     description=(
         "Produces a complete YouTube Short video from a script. "

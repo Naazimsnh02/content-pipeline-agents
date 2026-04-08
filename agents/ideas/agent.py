@@ -21,7 +21,7 @@ class IdeasInput(BaseModel):
 
 root_agent = Agent(
     name="ideas_agent",
-    model=settings.gemini_model,
+    model=settings.active_model,
     input_schema=IdeasInput,
     description=(
         "Discovers trending YouTube content topics from HackerNews, Google Trends, "

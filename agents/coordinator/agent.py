@@ -16,7 +16,7 @@ from shared.config import settings
 
 root_agent = Agent(
     name="coordinator",
-    model=settings.gemini_model,
+    model=settings.active_model,
     description="YouTube content pipeline coordinator. Orchestrates ideas, research, scripting, production, scheduling, and analytics agents to create and publish YouTube Shorts.",
     instruction="""You are the Coordinator Agent for an autonomous YouTube content pipeline.
 

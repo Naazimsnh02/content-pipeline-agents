@@ -18,7 +18,7 @@ class ScriptInput(BaseModel):
 
 root_agent = Agent(
     name="script_agent",
-    model=settings.gemini_model,
+    model=settings.active_model,
     input_schema=ScriptInput,
     description=(
         "Writes engaging YouTube Shorts scripts. Takes a research brief and creator style, "

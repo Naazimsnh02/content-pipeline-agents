@@ -23,7 +23,7 @@ class SchedulerInput(BaseModel):
 
 root_agent = Agent(
     name="scheduler_agent",
-    model=settings.gemini_model,
+    model=settings.active_model,
     input_schema=SchedulerInput,
     description=(
         "Schedules YouTube video publishing. "

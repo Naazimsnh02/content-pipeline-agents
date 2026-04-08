@@ -1436,6 +1436,7 @@
       navigate('job-tracker');
       renderTrackerJobList();
       selectJob(jobId);
+      startStepAnimation(jobId);
       startPolling(jobId);
     } catch (e) {
       toast(e.message, 'error');
@@ -1484,12 +1485,48 @@
       navigate('job-tracker');
       renderTrackerJobList();
       selectJob(jobId);
+      startStepAnimation(jobId);
       startPolling(jobId);
     } catch (e) {
       toast(e.message, 'error');
     } finally {
       setLoading(btn, false, '✦ Run Full Pipeline');
     }
+  }
+
+  /* ── STEP ANIMATION ── */
+  const _stepTimers = {};   // jobId → { timeouts: [], stepIdx: number }
+  const STEP_DURATIONS = [8000, 15000, 12000, 20000, 8000]; // ms per step 0-4; step 5 holds
+
+  function startStepAnimation(jobId) {
+    if (_stepTimers[jobId]) return;
+    const entry = { timeouts: [], stepIdx: 0 };
+    _stepTimers[jobId] = entry;
+
+    function advance(idx) {
+      entry.stepIdx = idx;
+      const job = state.jobCache.find(j => j.job_id === jobId);
+      if (job && state.selectedJobId === jobId) renderDetailRunning(job, idx);
+      // Schedule next step (stop auto-advance at step 5 — Analytics Loop)
+      if (idx < STEP_DURATIONS.length) {
+        const t = setTimeout(() => advance(idx + 1), STEP_DURATIONS[idx]);
+        entry.timeouts.push(t);
+      }
+      // idx === 5: stays here until polling fires completion
+    }
+
+    advance(0);
+  }
+
+  function stopStepAnimation(jobId) {
+    const entry = _stepTimers[jobId];
+    if (!entry) return;
+    entry.timeouts.forEach(t => clearTimeout(t));
+    delete _stepTimers[jobId];
+  }
+
+  function getAnimatedStepIdx(jobId) {
+    return _stepTimers[jobId]?.stepIdx ?? 0;
   }
 
   /* ── POLLING ── */
@@ -1502,25 +1539,13 @@
         const res = await fetch(`/pipeline/${jobId}`);
         if (!res.ok) return;
         const data = await res.json();
-        const stage = data.data?.current_stage || 'ideas';
         const status = data.status;
 
         // Update cache
         const idx = state.jobCache.findIndex(j => j.job_id === jobId);
         if (idx !== -1) {
           state.jobCache[idx].status = status;
-          state.jobCache[idx].current_stage = stage;
           if (data.data?.response) state.jobCache[idx].response = data.data.response;
-        }
-
-        // Re-render if this job is selected
-        if (state.selectedJobId === jobId) {
-          if (status === 'running') {
-            const job = state.jobCache[idx] || {};
-            renderDetailRunning(job, stage);
-          } else {
-            renderDetailFromApiData(data);
-          }
         }
 
         renderTrackerJobList();
@@ -1529,13 +1554,20 @@
         if (status === 'completed' || status === 'failed') {
           clearInterval(_pollTimers[jobId]);
           delete _pollTimers[jobId];
+          stopStepAnimation(jobId);
+
           if (status === 'completed') {
             toast(`✓ Pipeline complete — Job ${jobId.slice(0,8)}`, 'success');
             loadJobs();
           }
+
+          // Re-render final state if selected
+          if (state.selectedJobId === jobId) {
+            renderDetailFromApiData(data);
+          }
         }
       } catch (_) { /* ignore transient errors */ }
-    }, 2000);
+    }, 3000);
   }
 
   /* ── JOB TRACKER ── */
@@ -1572,7 +1604,8 @@
     const job = state.jobCache.find(j => j.job_id === jobId);
     if (!job) return;
     if (job.status === 'running') {
-      renderDetailRunning(job, job.current_stage || 'ideas');
+      // Show current animated step (or step 0 if animation not started yet)
+      renderDetailRunning(job, getAnimatedStepIdx(jobId));
     } else {
       fetchAndRenderDetail(jobId);
     }
@@ -1602,16 +1635,15 @@
     }
   }
 
-  function renderDetailRunning(job, currentStage) {
+  function renderDetailRunning(job, activeIdx) {
     const stepsConfig = [
-      { key: 'ideas',      name: 'Ideas Discovery',   icon: '💡', detail: 'Scanning HackerNews, Google Trends…' },
-      { key: 'research',   name: 'Deep Research',     icon: '🔍', detail: 'Multi-source web research' },
-      { key: 'script',     name: 'Script Generation', icon: '📝', detail: 'Writing 60-75s hook-first script' },
-      { key: 'production', name: 'Video Production',  icon: '🎬', detail: 'TTS → Images → ffmpeg assembly' },
-      { key: 'scheduling', name: 'Smart Scheduling',  icon: '📅', detail: 'Finding optimal post time' },
-      { key: 'analytics',  name: 'Analytics Loop',    icon: '📊', detail: 'Post-publish feedback (48h)' },
+      { name: 'Ideas Discovery',   icon: '💡', detail: 'Scanning HackerNews, Google Trends…' },
+      { name: 'Deep Research',     icon: '🔍', detail: 'Fetching sources via Tavily…' },
+      { name: 'Script Generation', icon: '📝', detail: 'Writing 60-75s hook-first script…' },
+      { name: 'Video Production',  icon: '🎬', detail: 'TTS → Images → ffmpeg assembly…' },
+      { name: 'Smart Scheduling',  icon: '📅', detail: 'Finding optimal post time…' },
+      { name: 'Analytics Loop',    icon: '📊', detail: 'Finalising pipeline, almost done…' },
     ];
-    const activeIdx = stepsConfig.findIndex(s => s.key === currentStage);
     const steps = stepsConfig.map((s, i) => {
       let cls;
       if (i < activeIdx) cls = 'done';
@@ -1649,9 +1681,10 @@
       { name: 'Smart Scheduling',  icon: '📅', detail: 'Optimal slot found, calendar booked' },
       { name: 'Analytics Loop',    icon: '📊', detail: 'Scheduled for 48h post-publish check' },
     ];
+
     const allDone = status === 'completed';
     const steps = stepsConfig.map((s, i) => {
-      const cls = allDone ? 'done' : (i === 0 ? 'running' : 'pending');
+      const cls = allDone ? 'done' : 'pending';
       return `
         <div class="progress-step ${cls}">
           <div class="step-indicator">${cls === 'done' ? '✓' : s.icon}</div>
@@ -1659,9 +1692,11 @@
           <span class="step-time">${cls === 'done' ? '✓' : '—'}</span>
         </div>`;
     }).join('');
+
     const scriptPreview = response
       ? response.slice(0, 800) + (response.length > 800 ? '\n\n…' : '')
-      : 'Awaiting output…';
+      : '';
+
     document.getElementById('tracker-detail').innerHTML = `
       <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         ${badgeHtml(status)}
@@ -1674,22 +1709,27 @@
       </div>
       <div class="tracker-layout">
         <div class="pipeline-progress">${steps}</div>
+        ${allDone ? `
         <div class="script-panel">
           <div style="font-family:var(--font-disp);font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);">Coordinator Output</div>
           <textarea class="script-textarea" readonly>${escHtml(scriptPreview)}</textarea>
-          ${status === 'completed' ? `
-            <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;"
-              onclick="navigator.clipboard.writeText(document.querySelector('.script-textarea').value);toast('Copied!','success')">
-              Copy Output
-            </button>` : ''}
-        </div>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;"
+            onclick="navigator.clipboard.writeText(document.querySelector('.script-textarea').value);toast('Copied!','success')">
+            Copy Output
+          </button>
+        </div>` : ''}
       </div>`;
   }
 
   function refreshTrackerList() {
     renderTrackerJobList();
     if (state.selectedJobId && !state.selectedJobId.startsWith('pending-')) {
-      fetchAndRenderDetail(state.selectedJobId);
+      const job = state.jobCache.find(j => j.job_id === state.selectedJobId);
+      if (job?.status === 'running') {
+        renderDetailRunning(job, getAnimatedStepIdx(state.selectedJobId));
+      } else {
+        fetchAndRenderDetail(state.selectedJobId);
+      }
     }
   }
 
