@@ -9,7 +9,8 @@ import logging
 import os
 import subprocess
 import tempfile
-import time
+import base64
+import requests
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -107,9 +108,18 @@ def generate_scene_images(scene_prompts: list[str], job_id: str = "") -> dict:
             "image_paths": fake_paths,
             "count": len(fake_paths),
             "demo": True,
-            "message": f"[DEMO] Image generation skipped. Would generate {len(scene_prompts)} images.",
+            "message": f"[DEMO] Image generation skipped. Would generate {len(scene_prompts)} {settings.image_provider} images.",
         }
 
+    # Dispatch to the configured provider
+    if settings.image_provider == "flux2":
+        return _generate_images_flux2(scene_prompts, job_id)
+    else:
+        return _generate_images_imagen(scene_prompts, job_id)
+
+
+def _generate_images_imagen(scene_prompts: list[str], job_id: str = "") -> dict:
+    """Internal helper for Google Imagen generation."""
     if not settings.google_api_key and not settings.google_genai_use_vertexai:
         return {"error": "GOOGLE_API_KEY not set", "image_paths": []}
 
@@ -159,7 +169,56 @@ def generate_scene_images(scene_prompts: list[str], job_id: str = "") -> dict:
 
         return {"image_paths": image_paths, "count": len(image_paths)}
     except Exception as exc:
-        logger.error("Image generation failed: %s", exc, exc_info=True)
+        logger.error("Image generation failed (Imagen): %s", exc, exc_info=True)
+        return {"error": str(exc), "image_paths": []}
+
+
+def _generate_images_flux2(scene_prompts: list[str], job_id: str = "") -> dict:
+    """Internal helper for Flux.2 generation via Modal.com endpoint."""
+    if not settings.modal_flux2_endpoint_url:
+        return {"error": "MODAL_FLUX_ENDPOINT_URL not set in .env", "image_paths": []}
+
+    headers = {"Content-Type": "application/json"}
+    if settings.modal_token_id and settings.modal_token_secret:
+        headers["Authorization"] = f"Bearer {settings.modal_token_id}:{settings.modal_token_secret}"
+
+    image_paths = []
+    try:
+        for i, prompt in enumerate(scene_prompts[:6]):
+            out_path = _WORK_DIR / f"scene_{i}_{job_id or int(time.time())}.png"
+            
+            payload = {
+                "operation": "generate",
+                "prompt": f"{prompt}, vertical 9:16 portrait format",
+                "width": 1080,
+                "height": 1920,
+            }
+
+            logger.info("Generating Flux2 image %d/%d via Modal...", i+1, len(scene_prompts))
+            r = requests.post(settings.modal_flux2_endpoint_url, json=payload, headers=headers, timeout=300)
+            
+            if r.status_code != 200:
+                logger.error("Modal Flux2 failed (HTTP %d): %s", r.status_code, r.text[:200])
+                continue
+
+            result = r.json()
+            img_b64 = result.get("image_base64")
+            output_url = result.get("output_url")
+
+            if img_b64:
+                out_path.write_bytes(base64.b64decode(img_b64))
+                image_paths.append(str(out_path))
+            elif output_url:
+                img_r = requests.get(output_url, timeout=60)
+                img_r.raise_for_status()
+                out_path.write_bytes(img_r.content)
+                image_paths.append(str(out_path))
+            else:
+                logger.warning("No image data in Modal response for scene %d", i)
+
+        return {"image_paths": image_paths, "count": len(image_paths)}
+    except Exception as exc:
+        logger.error("Image generation failed (Flux2/Modal): %s", exc, exc_info=True)
         return {"error": str(exc), "image_paths": []}
 
 

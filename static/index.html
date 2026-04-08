@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hermes — Autonomous YouTube Content Pipeline</title>
+  <meta name="description" content="From idea to YouTube Short — fully automated. 7 AI agents, zero manual work." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07060A;
+      --bg-2:      #0D0B12;
+      --surface:   #12101A;
+      --surface-2: #1A1825;
+      --border:    #22202E;
+      --border-2:  #2E2B3D;
+      --gold:      #C8873A;
+      --gold-b:    #E8A84E;
+      --gold-dim:  rgba(200, 135, 58, 0.12);
+      --gold-glow: rgba(200, 135, 58, 0.35);
+      --violet:    #8B7CF8;
+      --green:     #3ECF8E;
+      --red:       #E85555;
+      --text:      #EDEAF5;
+      --text-2:    #9E9BB0;
+      --text-3:    #5C596E;
+      --font-disp: 'Syne', sans-serif;
+      --font-body: 'Figtree', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(139,124,248,0.08) 0%, transparent 70%),
+        linear-gradient(rgba(34,32,46,0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,32,46,0.4) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(7,6,10,0.85);
+      border-color: var(--border);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-disp);
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--bg);
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: var(--font-disp);
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--text);
+      letter-spacing: 0.08em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-2);
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--gold);
+      color: var(--bg) !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      text-decoration: none;
+      transition: background 0.2s, box-shadow 0.2s !important;
+    }
+    .nav-cta:hover {
+      background: var(--gold-b) !important;
+      box-shadow: 0 0 20px var(--gold-glow);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 60px;
+      padding: 140px 80px 80px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .hero-left { max-width: 580px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(200,135,58,0.3);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-b);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      font-family: var(--font-mono);
+    }
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-b);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    h1 {
+      font-family: var(--font-disp);
+      font-size: clamp(42px, 5vw, 68px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+    h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    .hero-desc {
+      font-size: 18px;
+      color: var(--text-2);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 480px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold);
+      color: var(--bg);
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .btn-primary:hover {
+      background: var(--gold-b);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px var(--gold-glow);
+    }
+    .btn-primary svg { transition: transform 0.2s; }
+    .btn-primary:hover svg { transform: translateX(3px); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--text-2);
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid var(--border-2);
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-2);
+      background: var(--surface);
+    }
+
+    /* ── PIPELINE VISUALIZATION ── */
+    .hero-right {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .pipeline-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 460px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pipeline-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-b), transparent);
+    }
+
+    .pipeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .pipeline-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .pipeline-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--green);
+    }
+    .pipeline-status::before {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .pipeline-request {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text-2);
+    }
+    .pipeline-request .user-tag {
+      color: var(--gold-b);
+      font-weight: 500;
+    }
+
+    .agent-steps { display: flex; flex-direction: column; gap: 6px; }
+
+    .agent-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+      position: relative;
+    }
+    .agent-step.done {
+      background: rgba(62,207,142,0.06);
+      border-color: rgba(62,207,142,0.2);
+    }
+    .agent-step.running {
+      background: var(--gold-dim);
+      border-color: rgba(200,135,58,0.3);
+    }
+    .agent-step.pending {
+      opacity: 0.5;
+    }
+
+    .step-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .done .step-icon { background: rgba(62,207,142,0.15); }
+    .running .step-icon { background: var(--gold-dim); }
+    .pending .step-icon { background: var(--surface-2); }
+
+    .step-info { flex: 1; }
+    .step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .step-detail {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-3);
+      margin-top: 1px;
+    }
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .done .step-badge { background: rgba(62,207,142,0.12); color: var(--green); }
+    .running .step-badge {
+      background: var(--gold-dim);
+      color: var(--gold-b);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .pending .step-badge { background: var(--surface-2); color: var(--text-3); }
+
+    /* running shimmer */
+    .agent-step.running::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: linear-gradient(90deg, transparent 0%, rgba(200,135,58,0.07) 50%, transparent 100%);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ── TICKER ── */
+    .ticker {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+      padding: 14px 0;
+      overflow: hidden;
+    }
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      animation: tick 30s linear infinite;
+      white-space: nowrap;
+    }
+    @keyframes tick {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 32px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+    }
+    .ticker-item span { color: var(--gold); }
+    .ticker-sep {
+      color: var(--border-2);
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 100px 48px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-family: var(--font-disp);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .section-desc {
+      font-size: 17px;
+      color: var(--text-2);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 64px;
+    }
+
+    /* ── PIPELINE STEPS SECTION ── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .step-card {
+      background: var(--bg-2);
+      padding: 36px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .step-card:hover { background: var(--surface); }
+    .step-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-2), transparent);
+    }
+
+    .step-num {
+      font-family: var(--font-disp);
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--border-2);
+      margin-bottom: 16px;
+      letter-spacing: -0.04em;
+    }
+
+    .step-card:hover .step-num { color: var(--gold-dim); }
+
+    .step-card h3 {
+      font-family: var(--font-disp);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .step-card p {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .step-card .step-emoji {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      border-color: var(--border-2);
+      background: var(--surface);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      opacity: 0;
+      background: linear-gradient(135deg, var(--gold-dim) 0%, transparent 60%);
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .feature-card:hover::after { opacity: 1; }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .feature-card:hover .feature-icon {
+      background: var(--gold-dim);
+      border-color: rgba(200,135,58,0.3);
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-disp);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    /* ── DEMO SECTION ── */
+    .demo-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 100px 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .demo-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .demo-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .traffic-light {
+      display: flex;
+      gap: 6px;
+    }
+    .tl { width: 10px; height: 10px; border-radius: 50%; }
+    .tl-r { background: #E85555; opacity: 0.6; }
+    .tl-y { background: var(--gold); opacity: 0.6; }
+    .tl-g { background: var(--green); opacity: 0.6; }
+
+    .demo-box-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      margin-left: 4px;
+    }
+
+    .demo-code {
+      padding: 20px 22px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text-2);
+    }
+    .demo-code .key { color: var(--violet); }
+    .demo-code .val { color: var(--gold-b); }
+    .demo-code .str { color: var(--green); }
+    .demo-code .cmt { color: var(--text-3); }
+    .demo-code .brace { color: var(--text-3); }
+
+    .demo-output {
+      padding: 20px 22px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-2);
+    }
+    .demo-output .highlight { color: var(--text); font-weight: 500; }
+    .demo-output .tag {
+      display: inline-block;
+      background: var(--gold-dim);
+      color: var(--gold-b);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+
+    /* ── STATS SECTION ── */
+    .stats-section {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+      position: relative;
+      z-index: 1;
+    }
+    .stats-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 64px 48px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+    }
+    .stat-item {
+      padding: 16px 24px;
+      text-align: center;
+    }
+    .stat-item + .stat-item { border-left: 1px solid var(--border); }
+    .stat-num {
+      font-family: var(--font-disp);
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--gold-b);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    /* ── TECH STACK ── */
+    .tech-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .tech-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 8px 18px;
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .tech-pill:hover {
+      border-color: var(--border-2);
+      color: var(--text);
+      background: var(--surface-2);
+    }
+    .tech-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 120px 48px;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, rgba(200,135,58,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 {
+      font-size: clamp(40px, 5vw, 72px);
+      margin-bottom: 24px;
+    }
+    .cta-section p {
+      font-size: 18px;
+      color: var(--text-2);
+      margin-bottom: 48px;
+      line-height: 1.7;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-2); }
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 120px 40px 60px;
+        text-align: center;
+      }
+      .hero-left { max-width: 100%; }
+      .hero-desc { max-width: 100%; }
+      .hero-actions { justify-content: center; }
+      .hero-right { max-width: 480px; margin: 0 auto; width: 100%; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .stats-inner { grid-template-columns: 1fr 1fr; gap: 24px; }
+      .stat-item + .stat-item { border-left: none; border-top: 1px solid var(--border); }
+      .demo-layout { grid-template-columns: 1fr; }
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      section, .demo-section, .cta-section { padding: 80px 24px; }
+      footer { flex-direction: column; gap: 24px; text-align: center; }
+      .footer-left { flex-direction: column; }
+    }
+
+    @media (max-width: 640px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a href="/" class="nav-logo">
+      <div class="logo-mark">H</div>
+      <span class="logo-text">HERMES</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="/docs">API Docs</a></li>
+      <li><a href="/app" class="nav-cta">Launch App →</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-badge reveal">
+        <span class="dot"></span>
+        Powered by Google ADK · Gemini 2.5 Flash
+      </div>
+      <h1 class="reveal reveal-delay-1">
+        From idea to<br/>YouTube Short.<br/><em>Automated.</em>
+      </h1>
+      <p class="hero-desc reveal reveal-delay-2">
+        Hermes is a 7-agent AI pipeline that takes a single sentence and delivers
+        a fully researched, scripted, produced, and scheduled YouTube Short —
+        with zero manual work.
+      </p>
+      <div class="hero-actions reveal reveal-delay-3">
+        <a href="/app" class="btn-primary">
+          Start Creating
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="#demo" class="btn-ghost">See how it works</a>
+      </div>
+    </div>
+
+    <div class="hero-right reveal reveal-delay-2">
+      <div class="pipeline-card">
+        <div class="pipeline-header">
+          <span class="pipeline-title">pipeline / job_7f3a2c</span>
+          <span class="pipeline-status">RUNNING</span>
+        </div>
+
+        <div class="pipeline-request">
+          <span class="user-tag">→ request: </span>"Create a YouTube Short about<br/>
+          &nbsp;&nbsp;Apple's Vision Pro competitor for Tuesday"
+        </div>
+
+        <div class="agent-steps">
+          <div class="agent-step done">
+            <div class="step-icon">💡</div>
+            <div class="step-info">
+              <div class="step-name">Ideas Discovery</div>
+              <div class="step-detail">Topic: Apple vs Samsung XR Race 2025</div>
+            </div>
+            <span class="step-badge">done</span>
+          </div>
+          <div class="agent-step done">
+            <div class="step-icon">🔍</div>
+            <div class="step-info">
+              <div class="step-name">Deep Research</div>
+              <div class="step-detail">12 sources · 6 key facts · 2 quotes</div>
+            </div>
+            <span class="step-badge">done</span>
+          </div>
+          <div class="agent-step running">
+            <div class="step-icon">📝</div>
+            <div class="step-info">
+              <div class="step-name">Script Generation</div>
+              <div class="step-detail">Writing 72s hook-first script…</div>
+            </div>
+            <span class="step-badge">writing</span>
+          </div>
+          <div class="agent-step pending">
+            <div class="step-icon">🎬</div>
+            <div class="step-info">
+              <div class="step-name">Video Production</div>
+              <div class="step-detail">TTS · Images · ffmpeg assembly</div>
+            </div>
+            <span class="step-badge">pending</span>
+          </div>
+          <div class="agent-step pending">
+            <div class="step-icon">📅</div>
+            <div class="step-info">
+              <div class="step-name">Smart Scheduling</div>
+              <div class="step-detail">Optimal post time · Calendar event</div>
+            </div>
+            <span class="step-badge">pending</span>
+          </div>
+          <div class="agent-step pending">
+            <div class="step-icon">📊</div>
+            <div class="step-info">
+              <div class="step-name">Analytics Loop</div>
+              <div class="step-detail">48h post-publish feedback</div>
+            </div>
+            <span class="step-badge">pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    <div class="ticker-track">
+      <!-- Repeated twice for seamless loop -->
+      <span class="ticker-item"><span>01</span> Ideas Discovery <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>02</span> Deep Research <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>03</span> Script Generation <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>04</span> Video Production <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>05</span> Smart Scheduling <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>06</span> Analytics Feedback <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>01</span> Ideas Discovery <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>02</span> Deep Research <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>03</span> Script Generation <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>04</span> Video Production <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>05</span> Smart Scheduling <span class="ticker-sep">✦</span></span>
+      <span class="ticker-item"><span>06</span> Analytics Feedback <span class="ticker-sep">✦</span></span>
+    </div>
+  </div>
+
+  <!-- PIPELINE STEPS -->
+  <section id="pipeline">
+    <div class="section-label reveal">The Pipeline</div>
+    <h2 class="reveal reveal-delay-1">Six agents.<br/>One sentence input.</h2>
+    <p class="section-desc reveal reveal-delay-2">
+      Each agent is a specialist. Together they form an autonomous content factory
+      that runs while you sleep.
+    </p>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-num">01</div>
+        <div class="step-emoji">💡</div>
+        <h3>Ideas Discovery</h3>
+        <p>Scours HackerNews, Google Trends, and the web to surface trending, high-novelty topics. Avoids repeats with a Firestore memory layer.</p>
+      </div>
+      <div class="step-card reveal reveal-delay-1">
+        <div class="step-num">02</div>
+        <div class="step-emoji">🔍</div>
+        <h3>Deep Research</h3>
+        <p>Multi-angle web search via Tavily, Firecrawl, and DuckDuckGo. Extracts key facts, statistics, and quotable moments into a structured brief.</p>
+      </div>
+      <div class="step-card reveal reveal-delay-2">
+        <div class="step-num">03</div>
+        <div class="step-emoji">📝</div>
+        <h3>Script Generation</h3>
+        <p>Writes hook-first, 60–75 second YouTube Shorts scripts optimized for your niche, tone, and creator profile. No filler, no fluff.</p>
+      </div>
+      <div class="step-card reveal reveal-delay-3">
+        <div class="step-num">04</div>
+        <div class="step-emoji">🎬</div>
+        <h3>Video Production</h3>
+        <p>TTS voiceover with Edge TTS or ElevenLabs. AI image generation via Gemini Imagen. Assembled with ffmpeg and uploaded directly to YouTube.</p>
+      </div>
+      <div class="step-card reveal reveal-delay-4">
+        <div class="step-num">05</div>
+        <div class="step-emoji">📅</div>
+        <h3>Smart Scheduling</h3>
+        <p>Finds the optimal publish time for your niche and audience. Creates a Google Calendar event and schedules the YouTube post automatically.</p>
+      </div>
+      <div class="step-card reveal reveal-delay-5">
+        <div class="step-num">06</div>
+        <div class="step-emoji">📊</div>
+        <h3>Analytics Loop</h3>
+        <p>48 hours after publish, fetches views, CTR, watch time, and engagement. Feeds results back to improve future topic scoring. It learns.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="section-label reveal">Capabilities</div>
+    <h2 class="reveal reveal-delay-1">Built for serious<br/>content creators.</h2>
+    <p class="section-desc reveal reveal-delay-2">
+      Not a toy. Hermes is production infrastructure for creators who want to
+      publish consistently without burning out.
+    </p>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">🎙️</div>
+        <h3>Natural Language Control</h3>
+        <p>Describe what you want in plain English. The coordinator agent understands intent, niche, deadline, and style — no form-filling required.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">🧠</div>
+        <h3>Creator Profiles</h3>
+        <p>Every creator has a unique voice. Configure your niche, tone, pacing, call-to-action style, and TTS voice once — applied to every video.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">🔁</div>
+        <h3>Self-Improving</h3>
+        <p>The analytics agent feeds post-publish performance back into the topic scoring system. Topics that perform well get surfaced more often.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">☁️</div>
+        <h3>Fully Cloud-Native</h3>
+        <p>Runs on Google Cloud Run with Firestore storage. Scales to zero when idle. Deploy once, run forever. Integrates with Cloud Scheduler for cron jobs.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-4">
+        <div class="feature-icon">💬</div>
+        <h3>Interactive Chat Mode</h3>
+        <p>Ask questions, request research, get topic ideas, or run one-off scripts via the chat interface. The coordinator holds full context across the session.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-5">
+        <div class="feature-icon">🔌</div>
+        <h3>Open API</h3>
+        <p>Every feature is exposed via clean REST endpoints. Build your own integrations, triggers, or workflows on top of the pipeline with full Swagger docs.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <div class="demo-section" id="demo">
+    <div class="section-label reveal">Live Demo</div>
+    <h2 class="reveal reveal-delay-1">One request.<br/>Complete pipeline.</h2>
+    <p class="section-desc reveal reveal-delay-2">
+      Send a single POST request and watch seven agents go to work.
+    </p>
+    <div class="demo-layout">
+      <div class="demo-box reveal reveal-delay-1">
+        <div class="demo-box-header">
+          <div class="traffic-light">
+            <div class="tl tl-r"></div>
+            <div class="tl tl-y"></div>
+            <div class="tl tl-g"></div>
+          </div>
+          <span class="demo-box-title">POST /pipeline</span>
+        </div>
+        <div class="demo-code">
+<span class="brace">{</span><br/>
+&nbsp;&nbsp;<span class="key">"request"</span>: <span class="str">"Create a Short about Apple's<br/>&nbsp;&nbsp;&nbsp;&nbsp;Vision Pro competitor for Tuesday"</span>,<br/>
+&nbsp;&nbsp;<span class="key">"niche"</span>: <span class="str">"tech"</span>,<br/>
+&nbsp;&nbsp;<span class="key">"creator_id"</span>: <span class="str">"my-channel"</span>,<br/>
+&nbsp;&nbsp;<span class="key">"deadline"</span>: <span class="str">"Tuesday 9am"</span><br/>
+<span class="brace">}</span><br/><br/>
+<span class="cmt">// Response — job starts immediately</span><br/>
+<span class="brace">{</span><br/>
+&nbsp;&nbsp;<span class="key">"job_id"</span>: <span class="val">"7f3a2c91..."</span>,<br/>
+&nbsp;&nbsp;<span class="key">"status_url"</span>: <span class="str">"/pipeline/7f3a2c91"</span>,<br/>
+&nbsp;&nbsp;<span class="key">"coordinator_response"</span>: <span class="str">"Pipeline started..."</span><br/>
+<span class="brace">}</span>
+        </div>
+      </div>
+
+      <div class="demo-box reveal reveal-delay-2">
+        <div class="demo-box-header">
+          <div class="traffic-light">
+            <div class="tl tl-r"></div>
+            <div class="tl tl-y"></div>
+            <div class="tl tl-g"></div>
+          </div>
+          <span class="demo-box-title">Coordinator response</span>
+        </div>
+        <div class="demo-output" id="typewriter-output">
+          <span class="tag">IDEAS</span> Selected: <span class="highlight">"Apple vs Samsung — The XR Arms Race of 2025"</span><br/><br/>
+          <span class="tag">RESEARCH</span> Found <span class="highlight">14 sources</span>, extracted key stats: Vision Pro sales decline 38%, Samsung Galaxy XR launch confirmed Q2...<br/><br/>
+          <span class="tag">SCRIPT</span> Hook-first 72s script written. Opens: <em>"Samsung just made Apple's $3,499 headset look overpriced..."</em><br/><br/>
+          <span class="tag">PRODUCTION</span> TTS generated (ElevenLabs · Rachel voice), 8 AI visuals created, video assembled at 1080×1920...<br/><br/>
+          <span class="tag">SCHEDULE</span> Optimal slot: <span class="highlight">Tuesday 9:14 AM EST</span>. Calendar event created. YouTube scheduled. ✓
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-section">
+    <div class="stats-inner">
+      <div class="stat-item reveal">
+        <div class="stat-num">7</div>
+        <div class="stat-label">Specialized AI Agents</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-1">
+        <div class="stat-num">60s</div>
+        <div class="stat-label">Average pipeline run</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-2">
+        <div class="stat-num">48h</div>
+        <div class="stat-label">Analytics feedback loop</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-3">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Scales with Cloud Run</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH STACK -->
+  <section style="text-align:center;">
+    <div class="section-label reveal" style="margin-bottom:12px;">Built on</div>
+    <h2 class="reveal reveal-delay-1" style="margin-bottom:48px;">Enterprise-grade infrastructure</h2>
+    <div class="tech-row reveal reveal-delay-2">
+      <div class="tech-pill"><div class="dot" style="background:#4285F4"></div> Google ADK</div>
+      <div class="tech-pill"><div class="dot" style="background:#34A853"></div> Gemini 2.5 Flash</div>
+      <div class="tech-pill"><div class="dot" style="background:#FBBC05"></div> Firestore</div>
+      <div class="tech-pill"><div class="dot" style="background:#EA4335"></div> Cloud Run</div>
+      <div class="tech-pill"><div class="dot" style="background:#FF0000"></div> YouTube API</div>
+      <div class="tech-pill"><div class="dot" style="background:#0F9D58"></div> Google Calendar</div>
+      <div class="tech-pill"><div class="dot" style="background:var(--violet)"></div> ffmpeg + TTS</div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <div class="section-label reveal" style="display:block;margin-bottom:16px;">Get started</div>
+    <h2 class="reveal reveal-delay-1">Your first Short<br/>is one sentence away.</h2>
+    <p class="reveal reveal-delay-2">No setup required. Launch the app, type your idea, and let Hermes handle the rest.</p>
+    <div class="cta-actions reveal reveal-delay-3">
+      <a href="/app" class="btn-primary" style="font-size:16px;padding:16px 36px;">
+        Launch Hermes
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="/docs" class="btn-ghost" style="font-size:16px;padding:16px 28px;">API Docs</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      <a href="/" class="nav-logo" style="text-decoration:none;">
+        <div class="logo-mark">H</div>
+        <span class="logo-text">HERMES</span>
+      </a>
+      <ul class="footer-links">
+        <li><a href="/app">Dashboard</a></li>
+        <li><a href="/docs">API Docs</a></li>
+        <li><a href="/health">Health</a></li>
+      </ul>
+    </div>
+    <div class="footer-copy">Powered by Google ADK · Gemini 2.5 Flash</div>
+  </footer>
+
+  <script>
+    // Nav scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Animate pipeline steps cycling
+    const steps = document.querySelectorAll('.agent-step');
+    let currentRunning = 2;
+
+    function cycleSteps() {
+      steps.forEach((step, i) => {
+        step.classList.remove('done', 'running', 'pending');
+        if (i < currentRunning) step.classList.add('done');
+        else if (i === currentRunning) step.classList.add('running');
+        else step.classList.add('pending');
+      });
+
+      const detailEl = steps[currentRunning]?.querySelector('.step-detail');
+      if (detailEl) {
+        const details = [
+          'Scanning HackerNews, Google Trends…',
+          'Fetching 14 sources via Tavily…',
+          'Writing 72s hook-first script…',
+          'TTS → Images → ffmpeg assembly…',
+          'Finding optimal Tuesday slot…',
+          'Fetching views, CTR, watch time…',
+        ];
+        detailEl.textContent = details[currentRunning] || '';
+      }
+
+      currentRunning = (currentRunning + 1) % steps.length;
+    }
+
+    setInterval(cycleSteps, 2500);
+  </script>
+</body>
+</html>

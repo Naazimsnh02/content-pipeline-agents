@@ -3,6 +3,7 @@ Production Agent — converts a script into a finished video.
 Runs: TTS → image generation → video assembly → YouTube upload.
 Designed to run as a Cloud Run Job (async, long-running).
 """
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.production.tools import (
@@ -14,9 +15,19 @@ from agents.production.tools import (
 )
 from shared.config import settings
 
+class ProductionInput(BaseModel):
+    script_id: str = Field(description="The unique ID of the script.")
+    script_text: str = Field(description="The full voiceover script.")
+    youtube_title: str = Field(description="The video title.")
+    youtube_description: str = Field(description="The video description.")
+    youtube_tags: list[str] = Field(description="List of YouTube tags.")
+    niche: str = Field(description="The niche of the content.")
+    scene_prompts: list[str] = Field(description="List of 3-5 visual prompts for the scenes.")
+
 root_agent = Agent(
     name="production_agent",
     model=settings.gemini_model,
+    input_schema=ProductionInput,
     description=(
         "Produces a complete YouTube Short video from a script. "
         "Generates voiceover with TTS, creates scene images with Gemini Imagen, "

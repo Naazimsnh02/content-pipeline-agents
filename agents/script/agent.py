@@ -2,14 +2,24 @@
 Script Agent — writes a platform-optimised YouTube Short script
 using the research brief and the creator's style profile.
 """
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.script.tools import get_creator_style, save_script
 from shared.config import settings
 
+class ScriptInput(BaseModel):
+    brief_id: str = Field(description="The unique ID of the research brief.")
+    summary: str = Field(description="The executive summary from the research agent.")
+    key_facts: list[str] = Field(description="List of key facts and statistics.")
+    quotes: list[str] = Field(description="List of quotes to include.")
+    niche: str = Field(description="The niche of the content.")
+    creator_id: str = Field(description="The unique ID of the creator.")
+
 root_agent = Agent(
     name="script_agent",
     model=settings.gemini_model,
+    input_schema=ScriptInput,
     description=(
         "Writes engaging YouTube Shorts scripts. Takes a research brief and creator style, "
         "produces a 60-75 second script with hook, key points, and CTA. "
@@ -24,7 +34,12 @@ write a compelling 60-75 second YouTube Shorts script.
 1. Call `get_creator_style` with the creator_id and niche to load the style profile.
 2. Using the research brief provided, write a complete script following the style format.
 3. Call `save_script` with the completed script and all metadata.
-4. Return a confirmation with the script_id and the first 3 lines of the script.
+4. Return a structured JSON response with:
+   - `script_id`: from save_script
+   - `script_text`: the full voiceover text
+   - `youtube_title`: suggested title
+   - `youtube_description`: suggested description
+   - `youtube_tags`: list of tags
 
 ## Script Writing Guidelines
 

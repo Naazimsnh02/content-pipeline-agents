@@ -2,6 +2,8 @@
 Scheduler Agent — finds the optimal posting time, creates a Google Calendar event,
 and schedules the YouTube video for automatic publishing.
 """
+from typing import Optional
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.scheduler.tools import (
@@ -12,9 +14,17 @@ from agents.scheduler.tools import (
 )
 from shared.config import settings
 
+class SchedulerInput(BaseModel):
+    video_id: str = Field(description="Internal video job ID.")
+    youtube_video_id: str = Field(description="YouTube video ID.")
+    youtube_title: str = Field(description="Video title for scheduling.")
+    niche: str = Field(description="The niche of the content.")
+    deadline: Optional[str] = Field(None, description="Optional deadline (day name like 'Tuesday' or ISO date).")
+
 root_agent = Agent(
     name="scheduler_agent",
     model=settings.gemini_model,
+    input_schema=SchedulerInput,
     description=(
         "Schedules YouTube video publishing. "
         "Finds the optimal post time for the niche, creates a Google Calendar event, "

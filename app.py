@@ -21,7 +21,8 @@ from typing import AsyncGenerator, Optional
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from shared.config import settings
@@ -76,7 +77,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="YouTube Content Pipeline — Multi-Agent System",
     description=(
-        "Autonomous content pipeline powered by Google ADK + Gemini 2.5 Flash. "
+        "Autonomous content pipeline powered by Google ADK + Gemini 3 Flash. "
         "Converts a natural-language request into a researched, scripted, produced, "
         "and scheduled YouTube Short."
     ),
@@ -91,6 +92,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static frontend files
+import os as _os
+_static_dir = _os.path.join(_os.path.dirname(__file__), "static")
+if _os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 
 # ── Request/Response Models ───────────────────────────────────────────────────
@@ -153,10 +160,70 @@ async def run_agent(message: str, user_id: str, session_id: Optional[str] = None
     return final_text or "No response generated.", session.id
 
 
+# Maps agent name substrings → pipeline stage key
+_AGENT_STAGE_MAP = {
+    "ideas":      "ideas",
+    "research":   "research",
+    "script":     "script",
+    "production": "production",
+    "scheduler":  "scheduling",
+    "analytics":  "analytics",
+}
+
+
+async def run_agent_with_progress(
+    message: str,
+    user_id: str,
+    job_id: str,
+) -> tuple[str, str]:
+    """
+    Run the coordinator agent, updating pipeline_jobs.current_stage in the DB
+    whenever a sub-agent starts processing.
+    Returns (response_text, session_id).
+    """
+    runner = get_runner()
+    session = await _session_service.create_session(
+        app_name=settings.app_name, user_id=user_id
+    )
+    new_message = Content(role="user", parts=[Part(text=message)])
+
+    final_text = ""
+    current_stage = "ideas"
+
+    async for event in runner.run_async(
+        user_id=user_id,
+        session_id=session.id,
+        new_message=new_message,
+    ):
+        # Detect which sub-agent is active from the event author
+        author = getattr(event, "author", "") or ""
+        for key, stage in _AGENT_STAGE_MAP.items():
+            if key in author.lower() and stage != current_stage:
+                current_stage = stage
+                try:
+                    job = db.get("pipeline_jobs", job_id) or {}
+                    job["current_stage"] = current_stage
+                    db.save("pipeline_jobs", job_id, job)
+                except Exception:
+                    pass
+                break
+
+        if event.is_final_response() and event.content:
+            for part in event.content.parts:
+                if hasattr(part, "text") and part.text:
+                    final_text += part.text
+
+    return final_text or "No response generated.", session.id
+
+
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
 @app.get("/")
 async def root():
+    """Serve the landing page."""
+    landing = _os.path.join(_static_dir, "index.html")
+    if _os.path.isfile(landing):
+        return FileResponse(landing, media_type="text/html")
     return {
         "service": "YouTube Content Pipeline — Multi-Agent System",
         "version": "1.0.0",
@@ -175,6 +242,15 @@ async def root():
     }
 
 
+@app.get("/app")
+async def serve_app():
+    """Serve the dashboard application."""
+    app_html = _os.path.join(_static_dir, "app.html")
+    if _os.path.isfile(app_html):
+        return FileResponse(app_html, media_type="text/html")
+    raise HTTPException(status_code=404, detail="App not found")
+
+
 @app.get("/health")
 async def health():
     return {
@@ -186,6 +262,26 @@ async def health():
         "youtube": settings.has_youtube,
         "calendar": settings.has_calendar,
     }
+
+
+async def _run_pipeline_background(job_id: str, prompt: str, user_id: str, request_data: dict):
+    """Background task: runs the pipeline and updates job status in DB."""
+    try:
+        response_text, session_id = await run_agent_with_progress(prompt, user_id, job_id)
+        db.save("pipeline_jobs", job_id, {
+            "job_id": job_id,
+            "session_id": session_id,
+            "request": request_data,
+            "response": response_text,
+            "status": "completed",
+            "current_stage": "done",
+            "created_at": (db.get("pipeline_jobs", job_id) or {}).get("created_at", datetime.utcnow().isoformat()),
+        })
+    except Exception as exc:
+        logger.error("Pipeline failed for job %s: %s", job_id, exc, exc_info=True)
+        job = db.get("pipeline_jobs", job_id) or {}
+        job.update({"status": "failed", "error": str(exc)})
+        db.save("pipeline_jobs", job_id, job)
 
 
 @app.post("/pipeline", response_model=PipelineResponse)
@@ -210,27 +306,25 @@ async def run_pipeline(request: PipelineRequest, background_tasks: BackgroundTas
         f"Job ID for tracking: {job_id}"
     )
 
-    try:
-        response_text, session_id = await run_agent(prompt, user_id)
+    # Save job immediately so the frontend can start polling
+    db.save("pipeline_jobs", job_id, {
+        "job_id": job_id,
+        "request": request.model_dump(),
+        "status": "running",
+        "current_stage": "ideas",
+        "created_at": datetime.utcnow().isoformat(),
+    })
 
-        # Save job record to DB
-        db.save("pipeline_jobs", job_id, {
-            "job_id": job_id,
-            "session_id": session_id,
-            "request": request.model_dump(),
-            "response": response_text,
-            "status": "completed",
-            "created_at": datetime.utcnow().isoformat(),
-        })
+    # Run pipeline in background so we can return job_id immediately
+    background_tasks.add_task(
+        _run_pipeline_background, job_id, prompt, user_id, request.model_dump()
+    )
 
-        return PipelineResponse(
-            job_id=job_id,
-            status_url=f"/pipeline/{job_id}",
-            coordinator_response=response_text,
-        )
-    except Exception as exc:
-        logger.error("Pipeline failed for job %s: %s", job_id, exc, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+    return PipelineResponse(
+        job_id=job_id,
+        status_url=f"/pipeline/{job_id}",
+        coordinator_response="",
+    )
 
 
 @app.post("/chat", response_model=ChatResponse)

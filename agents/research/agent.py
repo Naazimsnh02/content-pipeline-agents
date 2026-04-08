@@ -2,14 +2,21 @@
 Research Agent — takes a chosen topic, performs multi-angle web research,
 and produces a structured brief ready for the Script Agent.
 """
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.research.tools import web_search, deep_web_search, save_research_brief
 from shared.config import settings
 
+class ResearchInput(BaseModel):
+    topic_title: str = Field(description="The title of the topic to research.")
+    topic_id: str = Field(description="The unique ID of the topic.")
+    niche: str = Field(description="The niche of the topic.")
+
 root_agent = Agent(
     name="research_agent",
     model=settings.gemini_model,
+    input_schema=ResearchInput,
     description=(
         "Researches a given topic in depth using web search. "
         "Produces a structured brief with summary, key facts, quotes, and sources "
@@ -34,7 +41,12 @@ produce a structured brief for the Script Agent.
    - key_facts: 5-8 bullet points with specific numbers/stats (e.g. "GPT-5 scores 97% on USMLE, up from 87%")
    - quotes: 2-3 quotable lines that would work well in a script
    - sources: list of the most credible source URLs/publications
-5. Return a confirmation with the brief_id and a short preview.
+5. Return a full structured JSON response with:
+   - `brief_id`: from save_research_brief
+   - `summary`: the executive summary
+   - `key_facts`: list of facts
+   - `quotes`: list of quotes
+   - `sources`: list of source URLs
 
 ## Rules
 - Prefer facts with numbers: "AI reduces diagnosis time by 40%" beats "AI helps doctors".

@@ -3,7 +3,7 @@ Shared Pydantic data models used across all agents.
 These mirror the Firestore document schema.
 """
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from pydantic import BaseModel, Field
 import uuid
@@ -11,6 +11,10 @@ import uuid
 
 def new_id() -> str:
     return str(uuid.uuid4())
+
+
+def now_utc():
+    return datetime.now(timezone.utc)
 
 
 # ── Topic (Ideas Agent output) ──────────────────────────────────────────────
@@ -24,7 +28,7 @@ class Topic(BaseModel):
     novelty_score: float = 1.0          # 1.0 = never covered, 0.0 = covered recently
     url: Optional[str] = None
     used_at: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Research Brief (Research Agent output) ──────────────────────────────────
@@ -38,7 +42,7 @@ class ResearchBrief(BaseModel):
     quotes: list[str] = []               # quotable lines
     sources: list[str] = []              # URLs / publication names
     raw_snippets: list[str] = []         # raw search result snippets
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Script (Script Agent output) ────────────────────────────────────────────
@@ -58,7 +62,7 @@ class Script(BaseModel):
     word_count: int = 0
     estimated_duration_s: int = 60
     creator_id: str = "default"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Video Job (Production Agent) ─────────────────────────────────────────────
@@ -82,8 +86,8 @@ class VideoJob(BaseModel):
     youtube_video_id: Optional[str] = None
     youtube_url: Optional[str] = None
     error: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Schedule (Scheduler Agent output) ───────────────────────────────────────
@@ -95,7 +99,7 @@ class Schedule(BaseModel):
     platform: str = "youtube"
     calendar_event_id: Optional[str] = None
     calendar_event_url: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Analytics (Analytics Agent output) ──────────────────────────────────────

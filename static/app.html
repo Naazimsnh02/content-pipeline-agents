@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hermes Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07060A;
+      --bg-2:      #0D0B12;
+      --surface:   #12101A;
+      --surface-2: #1A1825;
+      --border:    #22202E;
+      --border-2:  #2E2B3D;
+      --gold:      #C8873A;
+      --gold-b:    #E8A84E;
+      --gold-dim:  rgba(200, 135, 58, 0.12);
+      --gold-glow: rgba(200, 135, 58, 0.35);
+      --violet:    #8B7CF8;
+      --green:     #3ECF8E;
+      --red:       #E85555;
+      --blue:      #4B8BF4;
+      --text:      #EDEAF5;
+      --text-2:    #9E9BB0;
+      --text-3:    #5C596E;
+      --font-disp: 'Syne', sans-serif;
+      --font-body: 'Figtree', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --sidebar-w: 240px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ── LAYOUT ── */
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      overflow-y: auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      text-decoration: none;
+    }
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      background: var(--gold);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-disp);
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: var(--font-disp);
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: 0.08em;
+    }
+
+    .nav-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0 20px;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      cursor: pointer;
+      border-radius: 0;
+      color: var(--text-2);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+      position: relative;
+    }
+    .nav-item:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: var(--gold-dim);
+      color: var(--gold-b);
+      border-left-color: var(--gold);
+    }
+    .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--gold);
+      color: var(--bg);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 100px;
+      font-family: var(--font-mono);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .mode-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .mode-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold-b);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg-2);
+    }
+    .topbar-title {
+      font-family: var(--font-disp);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: var(--bg);
+    }
+    .btn-gold:hover {
+      background: var(--gold-b);
+      box-shadow: 0 4px 16px var(--gold-glow);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border-2);
+    }
+    .btn-outline:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+    .btn-danger {
+      background: rgba(232,85,85,0.12);
+      color: var(--red);
+      border: 1px solid rgba(232,85,85,0.25);
+    }
+    .btn-danger:hover { background: rgba(232,85,85,0.2); }
+
+    /* ── CONTENT AREA ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .content::-webkit-scrollbar { width: 6px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    /* ── VIEWS ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── DASHBOARD VIEW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .stat-card.gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-b)); }
+    .stat-card.green::before { background: linear-gradient(90deg, #1a6644, var(--green)); }
+    .stat-card.violet::before { background: linear-gradient(90deg, #4a3a96, var(--violet)); }
+    .stat-card.blue::before { background: linear-gradient(90deg, #1e3a7a, var(--blue)); }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-family: var(--font-disp);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text-3);
+    }
+    .stat-sub .up { color: var(--green); }
+    .stat-sub .down { color: var(--red); }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title {
+      font-family: var(--font-disp);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .card-body { padding: 20px; }
+
+    /* Jobs table */
+    .job-table { width: 100%; border-collapse: collapse; }
+    .job-table th {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 0 0 12px;
+    }
+    .job-table td {
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-2);
+      vertical-align: middle;
+    }
+    .job-table tr:hover td { color: var(--text); }
+    .job-topic {
+      font-weight: 500;
+      color: var(--text);
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .job-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .badge-done { background: rgba(62,207,142,0.1); color: var(--green); }
+    .badge-running {
+      background: var(--gold-dim);
+      color: var(--gold-b);
+    }
+    .badge-running::before {
+      content: '';
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold-b);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .badge-failed { background: rgba(232,85,85,0.1); color: var(--red); }
+    .badge-pending { background: var(--surface-2); color: var(--text-3); }
+
+    /* Quick submit */
+    .quick-submit {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      display: block;
+    }
+    textarea, input, select {
+      width: 100%;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      transition: border-color 0.2s;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+    textarea { min-height: 90px; }
+    select { cursor: pointer; }
+
+    .niche-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover, .chip.selected {
+      background: var(--gold-dim);
+      border-color: rgba(200,135,58,0.35);
+      color: var(--gold-b);
+    }
+
+    /* ── PIPELINE FORM VIEW ── */
+    .pipeline-form {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .form-section {
+      margin-bottom: 28px;
+    }
+    .form-section h3 {
+      font-family: var(--font-disp);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+    .hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+    }
+
+    /* ── JOB TRACKER ── */
+    .tracker-two-col {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      height: calc(100vh - 60px - 64px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .tracker-jobs-panel {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-2);
+      overflow: hidden;
+    }
+    .tracker-jobs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tracker-jobs-scroll {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .tracker-job-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .tracker-job-item:hover { background: var(--surface); }
+    .tracker-job-item.selected {
+      background: var(--gold-dim);
+      border-left-color: var(--gold);
+    }
+    .tracker-job-item-topic {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 6px;
+    }
+    .tracker-job-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tracker-job-item-time {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      margin-left: auto;
+    }
+    .tracker-detail-panel {
+      overflow-y: auto;
+      padding: 24px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .tracker-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    .pipeline-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-step.done { border-color: rgba(62,207,142,0.25); background: rgba(62,207,142,0.04); }
+    .progress-step.running { border-color: rgba(200,135,58,0.35); background: var(--gold-dim); }
+    .progress-step.pending { opacity: 0.45; }
+
+    .progress-step.running::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(200,135,58,0.06), transparent);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .step-indicator {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .done .step-indicator {
+      background: rgba(62,207,142,0.15);
+      color: var(--green);
+      border: 1px solid rgba(62,207,142,0.3);
+    }
+    .running .step-indicator {
+      background: var(--gold-dim);
+      border: 1px solid rgba(200,135,58,0.4);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .pending .step-indicator {
+      background: var(--surface-2);
+      color: var(--text-3);
+      border: 1px solid var(--border);
+    }
+
+    .step-content { flex: 1; }
+    .step-content h4 {
+      font-family: var(--font-disp);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+    .step-output {
+      margin-top: 12px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+    .step-output .gold { color: var(--gold-b); }
+    .step-time {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-3);
+      margin-left: auto;
+      padding-left: 12px;
+    }
+
+    /* Script panel */
+    .script-panel { display: flex; flex-direction: column; gap: 16px; }
+    .script-textarea {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.75;
+      color: var(--text);
+      min-height: 280px;
+      resize: vertical;
+      width: 100%;
+      outline: none;
+    }
+    .script-textarea:focus { border-color: var(--gold); }
+
+    /* ── CHAT VIEW ── */
+    .chat-layout {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px - 64px);
+      gap: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    .msg {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      max-width: 780px;
+    }
+    .msg.user { flex-direction: row-reverse; margin-left: auto; }
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .msg.user .msg-avatar { background: var(--gold); color: var(--bg); font-weight: 700; font-family: var(--font-disp); }
+    .msg.agent .msg-avatar { background: var(--surface-2); border: 1px solid var(--border); }
+
+    .msg-bubble {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 640px;
+    }
+    .msg.user .msg-bubble {
+      background: var(--gold);
+      color: var(--bg);
+      border-radius: 14px 14px 4px 14px;
+      font-weight: 500;
+    }
+    .msg.agent .msg-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 14px 14px 14px 4px;
+    }
+    .msg-bubble code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg-2);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .msg-bubble strong { color: var(--text); font-weight: 600; }
+    .msg.user .msg-bubble strong { color: var(--bg); }
+
+    .msg-time {
+      font-size: 10.5px;
+      color: var(--text-3);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      padding: 0 4px;
+    }
+
+    .chat-input-area {
+      flex-shrink: 0;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .chat-input-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      transition: border-color 0.2s;
+    }
+    .chat-input-box:focus-within {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+    .chat-input-box textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      min-height: 22px;
+      max-height: 150px;
+      font-family: var(--font-body);
+      box-shadow: none;
+    }
+    .chat-send-btn {
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      color: var(--bg);
+    }
+    .chat-send-btn:hover { background: var(--gold-b); }
+    .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .chat-hints {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .chat-hint {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chat-hint:hover {
+      background: var(--gold-dim);
+      border-color: rgba(200,135,58,0.3);
+      color: var(--gold-b);
+    }
+
+    .session-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-3);
+    }
+
+    /* ── TYPING INDICATOR ── */
+    .typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 4px;
+      align-items: center;
+    }
+    .typing span {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-3);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    /* ── LIBRARY VIEW ── */
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .video-card:hover {
+      border-color: var(--border-2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .video-thumb {
+      height: 160px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .video-thumb-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(200,135,58,0.1), rgba(139,124,248,0.08));
+    }
+    .video-thumb-icon { position: relative; z-index: 1; }
+    .video-info { padding: 16px; }
+    .video-title {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .video-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .video-date { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+    .video-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+      color: var(--text-2);
+      text-decoration: none;
+    }
+    .icon-btn:hover { background: var(--gold-dim); border-color: rgba(200,135,58,0.3); color: var(--gold-b); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 20px; opacity: 0.5; }
+    .empty-title {
+      font-family: var(--font-disp);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-2);
+      margin-bottom: 8px;
+    }
+    .empty-desc { font-size: 13px; color: var(--text-3); margin-bottom: 24px; line-height: 1.6; }
+
+    /* ── TOAST ── */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13.5px;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      max-width: 340px;
+    }
+    .toast.success { border-color: rgba(62,207,142,0.3); }
+    .toast.error { border-color: rgba(232,85,85,0.3); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── SCROLLBAR ── */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    /* ── LOADING ── */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* responsive */
+    @media (max-width: 900px) {
+      :root { --sidebar-w: 56px; }
+      .logo-text, .nav-section-label, .nav-item span:not(.nav-icon) { display: none; }
+      .sidebar-footer { display: none; }
+      .nav-item { justify-content: center; padding: 12px; }
+      .nav-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="/" class="sidebar-logo">
+      <div class="logo-mark">H</div>
+      <span class="logo-text">HERMES</span>
+    </a>
+
+    <div class="nav-section-label">Pipeline</div>
+    <div class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">⊞</span>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" data-view="new-pipeline">
+      <span class="nav-icon">✦</span>
+      <span>New Pipeline</span>
+    </div>
+    <div class="nav-item" data-view="job-tracker">
+      <span class="nav-icon">◎</span>
+      <span>Job Tracker</span>
+    </div>
+
+    <div class="nav-section-label">Studio</div>
+    <div class="nav-item" data-view="chat">
+      <span class="nav-icon">◈</span>
+      <span>Chat</span>
+    </div>
+    <div class="nav-item" data-view="library">
+      <span class="nav-icon">▣</span>
+      <span>Library</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="mode-pill">
+        <div class="mode-dot"></div>
+        <span id="mode-label">Checking…</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <div class="topbar-actions">
+        <a href="/docs" class="btn btn-outline" target="_blank">API Docs</a>
+        <button class="btn btn-gold" onclick="navigate('new-pipeline')">
+          ✦ New Pipeline
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div id="view-dashboard" class="view active">
+        <div class="stats-row">
+          <div class="stat-card gold">
+            <div class="stat-label">Jobs Today</div>
+            <div class="stat-value" id="stat-jobs">—</div>
+            <div class="stat-sub">pipeline runs</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value" id="stat-done">—</div>
+            <div class="stat-sub">videos produced</div>
+          </div>
+          <div class="stat-card violet">
+            <div class="stat-label">Model</div>
+            <div class="stat-value" style="font-size:14px;padding-top:8px;line-height:1.3;" id="stat-model">—</div>
+            <div class="stat-sub">gemini 3 flash</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Status</div>
+            <div class="stat-value" style="font-size:22px;padding-top:6px;" id="stat-status">—</div>
+            <div class="stat-sub" id="stat-mode">loading…</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Recent jobs -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent Pipeline Jobs</span>
+              <button class="btn btn-outline" style="padding:5px 12px;font-size:12px;" onclick="loadJobs()">Refresh</button>
+            </div>
+            <div class="card-body">
+              <div id="jobs-container">
+                <div class="empty-state">
+                  <div class="empty-icon">◎</div>
+                  <div class="empty-title">No jobs yet</div>
+                  <div class="empty-desc">Submit your first pipeline request to see jobs here.</div>
+                  <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Start Pipeline</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick submit -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Quick Submit</span>
+            </div>
+            <div class="card-body">
+              <div class="quick-submit">
+                <div>
+                  <label class="form-label">What should Hermes create?</label>
+                  <textarea id="quick-request" placeholder="e.g. Create a YouTube Short about Apple's Vision Pro competitor…" rows="4"></textarea>
+                </div>
+                <div>
+                  <label class="form-label">Niche</label>
+                  <div class="niche-chips" id="quick-niche-chips">
+                    <div class="chip selected" data-niche="tech">Tech</div>
+                    <div class="chip" data-niche="finance">Finance</div>
+                    <div class="chip" data-niche="fitness">Fitness</div>
+                    <div class="chip" data-niche="gaming">Gaming</div>
+                    <div class="chip" data-niche="business">Business</div>
+                    <div class="chip" data-niche="science">Science</div>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Deadline (optional)</label>
+                  <input type="text" id="quick-deadline" placeholder="e.g. Tuesday 9am, tomorrow, 2025-04-15" />
+                </div>
+                <button class="btn btn-gold" style="width:100%;justify-content:center;" id="quick-submit-btn" onclick="quickSubmit()">
+                  ✦ Run Pipeline
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ NEW PIPELINE ═══ -->
+      <div id="view-new-pipeline" class="view">
+        <div class="pipeline-form">
+          <div class="form-section">
+            <h3>Content Request</h3>
+            <div class="form-field" style="margin-bottom:16px;">
+              <label>Describe what you want to create</label>
+              <textarea id="pipe-request" rows="4" placeholder="e.g. Create a YouTube Short explaining why Nvidia's stock dropped 10% this week, targeted at retail investors. Include key facts and a strong CTA."></textarea>
+              <span class="hint">Be specific. The more context you provide, the better the output.</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Configuration</h3>
+            <div class="form-row" style="margin-bottom:16px;">
+              <div class="form-field">
+                <label>Niche</label>
+                <div class="niche-chips" id="pipe-niche-chips">
+                  <div class="chip selected" data-niche="tech">Tech</div>
+                  <div class="chip" data-niche="finance">Finance</div>
+                  <div class="chip" data-niche="fitness">Fitness</div>
+                  <div class="chip" data-niche="gaming">Gaming</div>
+                  <div class="chip" data-niche="business">Business</div>
+                  <div class="chip" data-niche="science">Science</div>
+                  <div class="chip" data-niche="health">Health</div>
+                  <div class="chip" data-niche="crypto">Crypto</div>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Creator ID</label>
+                <input type="text" id="pipe-creator" placeholder="default" value="default" />
+                <span class="hint">References your creator profile settings</span>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Deadline (optional)</label>
+              <input type="text" id="pipe-deadline" placeholder="e.g. Tuesday 9am, 2025-04-15, next Friday" />
+              <span class="hint">Leave blank for automatic optimal scheduling</span>
+            </div>
+          </div>
+
+          <div class="submit-row">
+            <span class="hint" style="font-size:12px;">Agents: Ideas → Research → Script → Production → Schedule</span>
+            <button class="btn btn-gold" id="pipe-submit-btn" onclick="submitPipeline()">
+              ✦ Run Full Pipeline
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ JOB TRACKER ═══ -->
+      <div id="view-job-tracker" class="view">
+        <div class="tracker-two-col">
+          <!-- Left: job list -->
+          <div class="tracker-jobs-panel">
+            <div class="tracker-jobs-header">
+              <span style="font-family:var(--font-disp);font-size:13px;font-weight:700;color:var(--text);">All Jobs</span>
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;" onclick="refreshTrackerList()">↺ Refresh</button>
+            </div>
+            <div class="tracker-jobs-scroll" id="tracker-job-list">
+              <div class="empty-state" style="padding:40px 16px;">
+                <div class="empty-icon" style="font-size:28px;">◎</div>
+                <div class="empty-title" style="font-size:14px;">No jobs yet</div>
+                <div class="empty-desc" style="font-size:12px;">Submit a pipeline to see it here.</div>
+              </div>
+            </div>
+          </div>
+          <!-- Right: detail -->
+          <div class="tracker-detail-panel" id="tracker-detail">
+            <div class="empty-state">
+              <div class="empty-icon">◎</div>
+              <div class="empty-title">Select a job</div>
+              <div class="empty-desc">Choose a job from the list on the left to see its pipeline progress and output.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CHAT ═══ -->
+      <div id="view-chat" class="view">
+        <div class="chat-layout">
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg agent">
+              <div class="msg-avatar">H</div>
+              <div>
+                <div class="msg-bubble">
+                  <strong>Hermes coordinator here.</strong> I can help you discover trending topics, run research, generate scripts, or kick off the full pipeline. What would you like to create today?
+                </div>
+                <div class="msg-time">Just now</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <div class="chat-hints">
+              <div class="chat-hint" onclick="fillHint(this)">What's trending in tech this week?</div>
+              <div class="chat-hint" onclick="fillHint(this)">Research OpenAI's latest model</div>
+              <div class="chat-hint" onclick="fillHint(this)">Write a script about Apple Vision Pro</div>
+              <div class="chat-hint" onclick="fillHint(this)">What topics should I avoid?</div>
+            </div>
+            <div class="chat-input-box">
+              <textarea
+                id="chat-input"
+                placeholder="Ask Hermes anything…"
+                rows="1"
+                onkeydown="handleChatKey(event)"
+                oninput="autoResize(this)"
+              ></textarea>
+              <button class="chat-send-btn" id="chat-send-btn" onclick="sendChat()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 8L14 2L8 14L7 9L2 8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="session-info">
+              <span>Session:</span>
+              <span id="session-id-display" style="color:var(--gold);font-family:var(--font-mono);">new</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ LIBRARY ═══ -->
+      <div id="view-library" class="view">
+        <div class="empty-state">
+          <div class="empty-icon">▣</div>
+          <div class="empty-title">Your video library</div>
+          <div class="empty-desc">Completed pipeline jobs with YouTube links will appear here after production.</div>
+          <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create First Video</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  /* ── STATE ── */
+  const state = {
+    activeView: 'dashboard',
+    selectedNiche: { 'quick': 'tech', 'pipe': 'tech' },
+    sessionId: null,
+    selectedJobId: null,
+    pollTimer: null,
+    jobCache: [],
+  };
+
+  /* ── NAVIGATION ── */
+  const VIEW_TITLES = {
+    'dashboard': 'Dashboard',
+    'new-pipeline': 'New Pipeline',
+    'job-tracker': 'Job Tracker',
+    'chat': 'Chat with Hermes',
+    'library': 'Video Library',
+  };
+
+  function navigate(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    const view = document.getElementById(`view-${viewId}`);
+    if (view) view.classList.add('active');
+
+    const navItem = document.querySelector(`[data-view="${viewId}"]`);
+    if (navItem) navItem.classList.add('active');
+
+    document.getElementById('topbar-title').textContent = VIEW_TITLES[viewId] || viewId;
+    state.activeView = viewId;
+
+    // Refresh job list whenever tracker view becomes active
+    if (viewId === 'job-tracker') renderTrackerJobList();
+  }
+
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => navigate(item.dataset.view));
+  });
+
+  /* ── NICHE CHIPS ── */
+  function initChips(containerId, stateKey) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.selectedNiche[stateKey] = chip.dataset.niche;
+      });
+    });
+  }
+  initChips('quick-niche-chips', 'quick');
+  initChips('pipe-niche-chips', 'pipe');
+
+  /* ── HEALTH CHECK ── */
+  async function loadHealth() {
+    try {
+      const res = await fetch('/health');
+      const data = await res.json();
+      document.getElementById('stat-model').textContent = data.model?.replace('gemini-', '') || '—';
+      document.getElementById('stat-status').textContent = data.status === 'ok' ? '✓ Live' : '✗ Down';
+      document.getElementById('stat-mode').textContent = data.demo_mode ? 'demo mode' : 'production';
+      document.getElementById('mode-label').textContent = data.demo_mode ? 'Demo Mode' : 'Production';
+    } catch {
+      document.getElementById('stat-status').textContent = '⚠ Error';
+    }
+  }
+
+  /* ── JOBS ── */
+  async function loadJobs() {
+    // Jobs are fetched individually; for demo we show from cache
+    const container = document.getElementById('jobs-container');
+    if (state.jobCache.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">◎</div>
+          <div class="empty-title">No jobs yet</div>
+          <div class="empty-desc">Submit your first pipeline request to see jobs here.</div>
+          <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Start Pipeline</button>
+        </div>`;
+      document.getElementById('stat-jobs').textContent = '0';
+      document.getElementById('stat-done').textContent = '0';
+      return;
+    }
+
+    const done = state.jobCache.filter(j => j.status === 'completed').length;
+    document.getElementById('stat-jobs').textContent = state.jobCache.length;
+    document.getElementById('stat-done').textContent = done;
+
+    const rows = state.jobCache.map(j => `
+      <tr>
+        <td>
+          <div class="job-topic">${escHtml(j.topic || j.request?.request || 'Untitled')}</div>
+          <div class="job-id">${j.job_id?.slice(0,12)}…</div>
+        </td>
+        <td>${badgeHtml(j.status)}</td>
+        <td style="color:var(--text-3);font-family:var(--font-mono);font-size:11px;">${formatTime(j.created_at)}</td>
+        <td>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;" onclick="openTracker('${j.job_id}')">Track</button>
+        </td>
+      </tr>`).join('');
+
+    container.innerHTML = `
+      <table class="job-table">
+        <thead><tr>
+          <th>Job</th><th>Status</th><th>Created</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function badgeHtml(status) {
+    const map = {
+      completed: '<span class="badge badge-done">✓ done</span>',
+      running:   '<span class="badge badge-running">running</span>',
+      failed:    '<span class="badge badge-failed">✗ failed</span>',
+      pending:   '<span class="badge badge-pending">pending</span>',
+    };
+    return map[status] || `<span class="badge badge-pending">${status}</span>`;
+  }
+
+  /* ── QUICK SUBMIT ── */
+  async function quickSubmit() {
+    const request = document.getElementById('quick-request').value.trim();
+    if (!request) { toast('Please describe what to create', 'error'); return; }
+
+    const btn = document.getElementById('quick-submit-btn');
+    setLoading(btn, true, 'Running…');
+
+    try {
+      const res = await fetch('/pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request,
+          niche: state.selectedNiche.quick,
+          deadline: document.getElementById('quick-deadline').value.trim() || undefined,
+          creator_id: 'default',
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Pipeline failed');
+      }
+
+      const data = await res.json();
+      const jobId = data.job_id;
+
+      // Add job to cache immediately with running status
+      state.jobCache.unshift({
+        job_id: jobId,
+        status: 'running',
+        current_stage: 'ideas',
+        request: { request },
+        topic: request.slice(0, 60),
+        created_at: new Date().toISOString(),
+      });
+
+      document.getElementById('quick-request').value = '';
+      navigate('job-tracker');
+      renderTrackerJobList();
+      selectJob(jobId);
+      startPolling(jobId);
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setLoading(btn, false, '✦ Run Pipeline');
+    }
+  }
+
+  /* ── FULL PIPELINE SUBMIT ── */
+  async function submitPipeline() {
+    const request = document.getElementById('pipe-request').value.trim();
+    if (!request) { toast('Please describe what to create', 'error'); return; }
+
+    const btn = document.getElementById('pipe-submit-btn');
+    setLoading(btn, true, 'Running pipeline…');
+
+    try {
+      const res = await fetch('/pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request,
+          niche: state.selectedNiche.pipe,
+          creator_id: document.getElementById('pipe-creator').value.trim() || 'default',
+          deadline: document.getElementById('pipe-deadline').value.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Pipeline failed');
+      }
+
+      const data = await res.json();
+      const jobId = data.job_id;
+
+      state.jobCache.unshift({
+        job_id: jobId,
+        status: 'running',
+        current_stage: 'ideas',
+        request: { request },
+        topic: request.slice(0, 60),
+        created_at: new Date().toISOString(),
+      });
+
+      navigate('job-tracker');
+      renderTrackerJobList();
+      selectJob(jobId);
+      startPolling(jobId);
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setLoading(btn, false, '✦ Run Full Pipeline');
+    }
+  }
+
+  /* ── POLLING ── */
+  const _pollTimers = {};
+
+  function startPolling(jobId) {
+    if (_pollTimers[jobId]) return; // already polling
+    _pollTimers[jobId] = setInterval(async () => {
+      try {
+        const res = await fetch(`/pipeline/${jobId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const stage = data.data?.current_stage || 'ideas';
+        const status = data.status;
+
+        // Update cache
+        const idx = state.jobCache.findIndex(j => j.job_id === jobId);
+        if (idx !== -1) {
+          state.jobCache[idx].status = status;
+          state.jobCache[idx].current_stage = stage;
+          if (data.data?.response) state.jobCache[idx].response = data.data.response;
+        }
+
+        // Re-render if this job is selected
+        if (state.selectedJobId === jobId) {
+          if (status === 'running') {
+            const job = state.jobCache[idx] || {};
+            renderDetailRunning(job, stage);
+          } else {
+            renderDetailFromApiData(data);
+          }
+        }
+
+        renderTrackerJobList();
+
+        // Stop polling when done
+        if (status === 'completed' || status === 'failed') {
+          clearInterval(_pollTimers[jobId]);
+          delete _pollTimers[jobId];
+          if (status === 'completed') {
+            toast(`✓ Pipeline complete — Job ${jobId.slice(0,8)}`, 'success');
+            loadJobs();
+          }
+        }
+      } catch (_) { /* ignore transient errors */ }
+    }, 2000);
+  }
+
+  /* ── JOB TRACKER ── */
+
+  function renderTrackerJobList() {
+    const list = document.getElementById('tracker-job-list');
+    if (!list) return;
+    if (state.jobCache.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state" style="padding:40px 16px;">
+          <div class="empty-icon" style="font-size:28px;">◎</div>
+          <div class="empty-title" style="font-size:14px;">No jobs yet</div>
+          <div class="empty-desc" style="font-size:12px;">Submit a pipeline to see it here.</div>
+        </div>`;
+      return;
+    }
+    list.innerHTML = state.jobCache.map(j => {
+      const isSelected = j.job_id === state.selectedJobId;
+      const topic = escHtml((j.topic || j.request?.request || 'Pipeline job').slice(0, 46));
+      return `
+        <div class="tracker-job-item${isSelected ? ' selected' : ''}" onclick="selectJob('${j.job_id}')">
+          <div class="tracker-job-item-topic">${topic}</div>
+          <div class="tracker-job-item-meta">
+            ${badgeHtml(j.status)}
+            <span class="tracker-job-item-time">${formatTime(j.created_at)}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function selectJob(jobId) {
+    state.selectedJobId = jobId;
+    renderTrackerJobList();
+    const job = state.jobCache.find(j => j.job_id === jobId);
+    if (!job) return;
+    if (job.status === 'running') {
+      renderDetailRunning(job, job.current_stage || 'ideas');
+    } else {
+      fetchAndRenderDetail(jobId);
+    }
+  }
+
+  async function fetchAndRenderDetail(jobId) {
+    const detail = document.getElementById('tracker-detail');
+    detail.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:200px;"><div class="spinner"></div></div>`;
+    try {
+      const res = await fetch(`/pipeline/${jobId}`);
+      if (!res.ok) throw new Error('Job not found');
+      const data = await res.json();
+      const idx = state.jobCache.findIndex(j => j.job_id === jobId);
+      if (idx !== -1) {
+        state.jobCache[idx].status = data.status;
+        state.jobCache[idx].response = data.data?.response;
+      }
+      renderDetailFromApiData(data);
+      renderTrackerJobList();
+    } catch (e) {
+      detail.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠</div>
+          <div class="empty-title">Could not load job</div>
+          <div class="empty-desc">${escHtml(e.message)}</div>
+        </div>`;
+    }
+  }
+
+  function renderDetailRunning(job, currentStage) {
+    const stepsConfig = [
+      { key: 'ideas',      name: 'Ideas Discovery',   icon: '💡', detail: 'Scanning HackerNews, Google Trends…' },
+      { key: 'research',   name: 'Deep Research',     icon: '🔍', detail: 'Multi-source web research' },
+      { key: 'script',     name: 'Script Generation', icon: '📝', detail: 'Writing 60-75s hook-first script' },
+      { key: 'production', name: 'Video Production',  icon: '🎬', detail: 'TTS → Images → ffmpeg assembly' },
+      { key: 'scheduling', name: 'Smart Scheduling',  icon: '📅', detail: 'Finding optimal post time' },
+      { key: 'analytics',  name: 'Analytics Loop',    icon: '📊', detail: 'Post-publish feedback (48h)' },
+    ];
+    const activeIdx = stepsConfig.findIndex(s => s.key === currentStage);
+    const steps = stepsConfig.map((s, i) => {
+      let cls;
+      if (i < activeIdx) cls = 'done';
+      else if (i === activeIdx) cls = 'running';
+      else cls = 'pending';
+      return `
+        <div class="progress-step ${cls}">
+          <div class="step-indicator">${cls === 'done' ? '✓' : s.icon}</div>
+          <div class="step-content"><h4>${s.name}</h4><p>${s.detail}</p></div>
+          <span class="step-time">${cls === 'running' ? '…' : cls === 'done' ? '✓' : '—'}</span>
+        </div>`;
+    }).join('');
+    document.getElementById('tracker-detail').innerHTML = `
+      <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+        <span class="badge badge-running">running</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${stepsConfig[activeIdx]?.name || 'Starting…'}</span>
+      </div>
+      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+        <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:6px;">REQUEST</div>
+        <div style="font-size:14px;color:var(--text);font-weight:500;">${escHtml(job.topic || job.request?.request || '')}</div>
+      </div>
+      <div class="pipeline-progress">${steps}</div>`;
+  }
+
+  function renderDetailFromApiData(data) {
+    const job = data.data || {};
+    const request = job.request?.request || 'Pipeline job';
+    const response = job.response || '';
+    const status = data.status;
+    const stepsConfig = [
+      { name: 'Ideas Discovery',   icon: '💡', detail: 'Trending topic selected' },
+      { name: 'Deep Research',     icon: '🔍', detail: 'Sources researched, facts extracted' },
+      { name: 'Script Generation', icon: '📝', detail: '60-75s hook-first script written' },
+      { name: 'Video Production',  icon: '🎬', detail: 'TTS → Images → ffmpeg → YouTube' },
+      { name: 'Smart Scheduling',  icon: '📅', detail: 'Optimal slot found, calendar booked' },
+      { name: 'Analytics Loop',    icon: '📊', detail: 'Scheduled for 48h post-publish check' },
+    ];
+    const allDone = status === 'completed';
+    const steps = stepsConfig.map((s, i) => {
+      const cls = allDone ? 'done' : (i === 0 ? 'running' : 'pending');
+      return `
+        <div class="progress-step ${cls}">
+          <div class="step-indicator">${cls === 'done' ? '✓' : s.icon}</div>
+          <div class="step-content"><h4>${s.name}</h4><p>${s.detail}</p></div>
+          <span class="step-time">${cls === 'done' ? '✓' : '—'}</span>
+        </div>`;
+    }).join('');
+    const scriptPreview = response
+      ? response.slice(0, 800) + (response.length > 800 ? '\n\n…' : '')
+      : 'Awaiting output…';
+    document.getElementById('tracker-detail').innerHTML = `
+      <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        ${badgeHtml(status)}
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">Job ${data.job_id.slice(0,12)}…</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${formatTime(job.created_at)}</span>
+      </div>
+      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+        <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:6px;">REQUEST</div>
+        <div style="font-size:14px;color:var(--text);font-weight:500;">${escHtml(request)}</div>
+      </div>
+      <div class="tracker-layout">
+        <div class="pipeline-progress">${steps}</div>
+        <div class="script-panel">
+          <div style="font-family:var(--font-disp);font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);">Coordinator Output</div>
+          <textarea class="script-textarea" readonly>${escHtml(scriptPreview)}</textarea>
+          ${status === 'completed' ? `
+            <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;"
+              onclick="navigator.clipboard.writeText(document.querySelector('.script-textarea').value);toast('Copied!','success')">
+              Copy Output
+            </button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function refreshTrackerList() {
+    renderTrackerJobList();
+    if (state.selectedJobId && !state.selectedJobId.startsWith('pending-')) {
+      fetchAndRenderDetail(state.selectedJobId);
+    }
+  }
+
+  function openTracker(jobId) {
+    navigate('job-tracker');
+    renderTrackerJobList();
+    selectJob(jobId);
+  }
+
+  /* ── CHAT ── */
+  function fillHint(el) {
+    document.getElementById('chat-input').value = el.textContent;
+    document.getElementById('chat-input').focus();
+  }
+
+  function handleChatKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChat();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    const sendBtn = document.getElementById('chat-send-btn');
+    sendBtn.disabled = true;
+
+    appendMsg('user', msg);
+
+    // typing indicator
+    const typingId = appendTyping();
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: msg,
+          session_id: state.sessionId,
+          user_id: 'app-user',
+        }),
+      });
+
+      removeTyping(typingId);
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Chat failed');
+      }
+
+      const data = await res.json();
+      state.sessionId = data.session_id;
+      document.getElementById('session-id-display').textContent = data.session_id.slice(0, 12) + '…';
+      appendMsg('agent', data.response);
+    } catch (e) {
+      removeTyping(typingId);
+      appendMsg('agent', `⚠ Error: ${e.message}`);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  function appendMsg(role, text) {
+    const messages = document.getElementById('chat-messages');
+    const el = document.createElement('div');
+    el.className = `msg ${role}`;
+
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const avatarContent = role === 'user' ? 'U' : 'H';
+    const bubbleContent = escHtml(text).replace(/\n/g, '<br/>');
+
+    el.innerHTML = `
+      <div class="msg-avatar">${avatarContent}</div>
+      <div>
+        <div class="msg-bubble">${bubbleContent}</div>
+        <div class="msg-time">${now}</div>
+      </div>`;
+
+    messages.appendChild(el);
+    messages.scrollTop = messages.scrollHeight;
+    return el;
+  }
+
+  let typingCounter = 0;
+  function appendTyping() {
+    const id = ++typingCounter;
+    const messages = document.getElementById('chat-messages');
+    const el = document.createElement('div');
+    el.className = 'msg agent';
+    el.id = `typing-${id}`;
+    el.innerHTML = `
+      <div class="msg-avatar">H</div>
+      <div>
+        <div class="msg-bubble">
+          <div class="typing"><span></span><span></span><span></span></div>
+        </div>
+      </div>`;
+    messages.appendChild(el);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id) {
+    const el = document.getElementById(`typing-${id}`);
+    if (el) el.remove();
+  }
+
+  /* ── TOAST ── */
+  function toast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+    el.innerHTML = `<span style="color:${type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--gold)'}">${icon}</span> ${escHtml(message)}`;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  /* ── UTILS ── */
+  function escHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch { return iso; }
+  }
+
+  function setLoading(btn, loading, label) {
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div> ${escHtml(label)}`;
+    } else {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+
+  /* ── INIT ── */
+  loadHealth();
+  loadJobs();
+</script>
+</body>
+</html>

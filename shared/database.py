@@ -5,8 +5,10 @@ All agents use this module for state persistence.
 from __future__ import annotations
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
+
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from shared.config import settings
 
@@ -46,7 +48,7 @@ def _mem_key(collection: str, doc_id: str) -> str:
 def save(collection: str, doc_id: str, data: dict) -> None:
     """Save a document. Creates or overwrites."""
     # Always add timestamps
-    data = {**data, "_saved_at": datetime.utcnow().isoformat()}
+    data = {**data, "_saved_at": datetime.now(timezone.utc).isoformat()}
     fs = _get_firestore()
     if fs:
         fs.collection(collection).document(doc_id).set(data)
@@ -78,7 +80,7 @@ def query(
         ref = fs.collection(collection)
         if filters:
             for field, op, value in filters:
-                ref = ref.where(field, op, value)
+                ref = ref.where(filter=FieldFilter(field, op, value))
         if order_by:
             ref = ref.order_by(order_by, direction="DESCENDING")
         ref = ref.limit(limit)

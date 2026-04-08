@@ -5,7 +5,7 @@ All functions are plain Python (google-adk auto-wraps as FunctionTool).
 from __future__ import annotations
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import requests
@@ -184,7 +184,7 @@ def save_chosen_topic(
         source=source,
         url=url,
         score=score,
-        used_at=datetime.utcnow(),
+        used_at=datetime.now(timezone.utc),
     )
     db.save("topics", topic.id, topic.model_dump(mode="json"))
     return {

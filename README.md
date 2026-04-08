@@ -1,52 +1,107 @@
-# YouTube Content Pipeline — Multi-Agent System
+# Hermes — Autonomous YouTube Content Pipeline
 
-> **Hackathon Build** | Google ADK · Gemini 2.5 Flash · Cloud Run · Firestore
+> **Autonomous Multi-Agent System** | Gemini 3 Flash · Google ADK · Cloud Run · Firestore
 
-A production-ready multi-agent content pipeline that converts a single natural-language request like _"Create a YouTube Short about AI trends for next Tuesday"_ into a fully researched, scripted, produced, and scheduled video — autonomously.
+Hermes is a production-grade multi-agent content pipeline that transforms simple natural-language directives — like _"Create a YouTube Short about the psychological impact of social media"_ — into a fully researched, scripted, produced, and scheduled video, entirely without human intervention.
 
 ---
 
-## Architecture
+## The Hermes Architecture
 
-```
-User Request
-     │
-     ▼
-┌─────────────────────────────────────────────────────────────┐
-│               COORDINATOR AGENT  (Cloud Run)                │
-│          Google ADK · LlmAgent · Gemini 2.5 Flash           │
-│                                                             │
-│  Decomposes intent → dispatches sub-agents → assembles      │
-│  final output. Orchestrates parallel + sequential tasks.    │
-└──────┬──────────┬──────────┬──────────┬──────────┬──────────┘
-       │          │          │          │          │
-  [Ideas]   [Research]  [Script]  [Production] [Scheduler]
-       │          │          │          │          │
-       ▼          ▼          ▼          ▼          ▼
-  Trending    Web Search  LLM Script  TTS+Video  Calendar
-   Topics      + Brief     + Style    Assembly   + Upload
-       │                                          │
-       └──────────────┬───────────────────────────┘
-                      │
-                 [Analytics]        ← triggered 48h post-publish
-                      │
-              YouTube Metrics
-                  → Firestore
-                  → Feeds back
-                    to Ideas Agent
+Hermes operates as a collaborative swarm of specialized agents, orchestrated by a central Coordinator. Each agent has specific tools and responsibilities, ensuring high-quality output at every stage of the lifecycle.
+
+```mermaid
+graph TD
+    User["User Request"] --> Coord["Coordinator Agent (Gemini 3 Flash)"]
+    
+    subgraph "Agent Swarm"
+        Coord --> Ideas["Ideas Agent"]
+        Coord --> Research["Research Agent"]
+        Coord --> Script["Script Agent"]
+        Coord --> Production["Production Agent"]
+        Coord --> Scheduler["Scheduler Agent"]
+        Coord --> Analytics["Analytics Agent"]
+    end
+
+    Ideas --> |Trends| Coord
+    Research --> |Brief| Coord
+    Script --> |Script| Coord
+    Production --> |Video File| Coord
+    Scheduler --> |Calendar Event| Coord
+    Analytics --> |Feedback Loop| Ideas
 ```
 
-### Agent Responsibilities
+### Agent Roles & Responsibilities
 
-| Agent | Role | Tools | Cloud Run Type |
+| Agent | Capability | Core Tools | Cloud Run Type |
 |---|---|---|---|
-| **Coordinator** | Brain — decomposes request, dispatches, assembles | AgentTool wrappers for all sub-agents | Service |
-| **Ideas Agent** | Discovers trending topics, avoids repetition | HackerNews API, Google Trends, DuckDuckGo, Firestore | Service |
-| **Research Agent** | Deep-dives chosen topic → structured brief | DuckDuckGo, Tavily, Firecrawl, web scraping | Service |
-| **Script Agent** | Writes platform-optimised script in creator's voice | Niche style from Firestore, Gemini LLM | Service |
-| **Production Agent** | Voiceover → images → captions → video → upload | Edge TTS, Gemini Imagen, ffmpeg, YouTube API | Job (async) |
-| **Scheduler Agent** | Finds optimal post time, creates calendar event | Google Calendar API, YouTube scheduled publish | Service |
-| **Analytics Agent** | Post-publish metrics → feeds back to Ideas DB | YouTube Analytics API, Firestore | Job (cron) |
+| **Coordinator** | The Brain. Orchestrates task decomposition, dispatching, and assembly. | Google ADK, LlmAgent | Service |
+| **Ideas Agent** | Discovers trending topics and prioritizes them based on historical performance. | Google Trends, HackerNews API | Service |
+| **Research Agent** | Conducts deep-dives into topics to generate structured, factual briefs. | Tavily, Firecrawl, DuckDuckGo | Service |
+| **Script Agent** | Drafts platform-optimized scripts in the creator's specific voice and tone. | Gemini 3, Style-matching logic | Service |
+| **Production Agent** | Handles media generation: Voiceovers, Imagen visuals, and ffmpeg assembly. | Edge TTS, ElevenLabs, Imagen 3 | Job (Async) |
+| **Scheduler Agent** | Determines optimal posting times and creates Google Calendar entries. | Google Calendar API, YouTube API | Service |
+| **Analytics Agent** | Tracks post-publish performance and feeds metrics back into the Ideas DB. | YouTube Analytics API, Firestore | Job (Cron) |
+
+---
+
+## Project Structure
+
+```bash
+content-pipeline-agents/
+├── app.py                    # FastAPI entry point + ADK Runner
+├── deploy.sh                 # Cloud Run deployment script
+├── .env.example              # Key configuration templates
+│
+├── agents/                   # Individual Agent logic & Toolsets
+│   ├── coordinator/          # Root orchestrator
+│   ├── ideas/                # Trending discovery
+│   ├── research/             # Fact synthesis
+│   ├── script/               # Creative writing
+│   ├── production/           # Media generation (TTS/Imagen/ffmpeg)
+│   ├── scheduler/            # Calendar & YouTube scheduling
+│   └── analytics/            # Performance feedback loops
+│
+├── static/                   # Hermes Dashboard (app.html / index.html)
+├── shared/                   # Shared Pydantic models & Firestore Config
+└── scripts/                  # Auth utilities (YouTube/Calendar)
+```
+
+---
+
+## Agent Interaction Flow
+
+When a request like _"Create an AI trends video"_ is received, Hermes executes the following technical sequence:
+
+1.  **Coordinator**: Parses intent, niche, and deadline. Dispatches tasks.
+2.  **Ideas Agent**: 
+    - Fetches trending topics via HackerNews/Google Trends.
+    - Filters against `/topics` in Firestore to avoid repetition.
+3.  **Research Agent**: 
+    - Executes recursive web searches via Tavily/Firecrawl.
+    - Synthesizes search results into a structured Markdown brief.
+4.  **Script Agent**: 
+    - Loads the creator's specific tone/pacing from `/creator_profiles`.
+    - Generates a script with visual scene cues.
+5.  **Production Agent** (Background Job):
+    - **TTS**: Generates voiceover file.
+    - **Imagen**: Generates 3-5 cinematic scenes based on script cues.
+    - **ffmpeg**: Bonds audio, visuals, and dynamic captions into a 9:16 video.
+    - **Upload**: Pushes to YouTube as "Private" for creator review.
+6.  **Scheduler Agent**: 
+    - Maps the deadline to the optimal posting window.
+    - Creates a Google Calendar entry with the project link.
+    - Sets the YouTube "Scheduled Publish" timestamp.
+
+---
+
+## The Feedback Flywheel
+
+Analytics data is not just stored — it is actively used to improve the system:
+1. **Analytics Agent** fetches metrics (CTR, Watch Time) 48h post-publish.
+2. Updates `/analytics/{video_id}` and adjusts the niche performance score in Firestore.
+3. **Ideas Agent** queries topics ordered by these scores.
+4. Future content cycles prioritize proven formats, ensuring channel growth through data-driven discovery.
 
 ---
 
@@ -54,307 +109,52 @@ User Request
 
 | Layer | Technology |
 |---|---|
-| **Agent Framework** | [Google ADK](https://google.github.io/adk-docs/) (`google-adk`) |
-| **LLM** | Gemini 2.5 Flash (`gemini-2.5-flash`) |
-| **Database** | Google Cloud Firestore |
-| **Serving** | FastAPI + Uvicorn |
-| **Deployment** | Google Cloud Run (Services + Jobs) |
-| **CI/CD** | Google Cloud Build |
-| **Media Storage** | Google Cloud Storage |
-| **TTS** | Edge TTS (free) / ElevenLabs (premium) |
-| **Images** | Gemini Imagen API |
-| **Video Assembly** | ffmpeg |
-| **Research** | DuckDuckGo → Tavily → Firecrawl (fallback chain) |
+| **Model** | **Gemini 3 Flash** (`gemini-3-flash-preview`) |
+| **Framework** | **Google ADK** (Agent Development Kit) |
+| **Infrastructure** | Google Cloud Run (Services + Jobs) |
+| **Database** | Cloud Firestore + Google Cloud Storage |
+| **Media** | Edge TTS / ElevenLabs + Gemini Imagen |
+| **Research** | Tavily, Firecrawl, DuckDuckGo |
 
 ---
 
-## Project Structure
+## Setup & Deployment
 
-```
-content-pipeline-agents/
-├── app.py                    # FastAPI entry point + ADK Runner
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yaml       # Local dev (all services)
-├── deploy.sh                 # Cloud Run deployment script
-├── cloudbuild.yaml           # Cloud Build CI/CD
-├── .env.example
-│
-├── agents/
-│   ├── coordinator/
-│   │   └── agent.py          # root_agent — Coordinator
-│   ├── ideas/
-│   │   ├── agent.py          # Ideas sub-agent
-│   │   └── tools.py          # HN, Trends, DDG, Firestore tools
-│   ├── research/
-│   │   ├── agent.py          # Research sub-agent
-│   │   └── tools.py          # Web search + brief tools
-│   ├── script/
-│   │   ├── agent.py          # Script sub-agent
-│   │   └── tools.py          # Style loading + save tools
-│   ├── production/
-│   │   ├── agent.py          # Production sub-agent
-│   │   └── tools.py          # TTS, Imagen, ffmpeg, YouTube
-│   ├── scheduler/
-│   │   ├── agent.py          # Scheduler sub-agent
-│   │   └── tools.py          # Google Calendar + YouTube schedule
-│   └── analytics/
-│       ├── agent.py          # Analytics sub-agent
-│       └── tools.py          # YouTube Analytics + Firestore
-│
-├── shared/
-│   ├── config.py             # Pydantic settings (env vars)
-│   ├── database.py           # Firestore client + helpers
-│   └── models.py             # Shared Pydantic data models
-│
-└── demo/
-    ├── test_pipeline.py      # End-to-end integration test
-    └── sample_requests.http  # REST client test file
-```
+### Local Quickstart
 
----
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Environment**:
+   ```bash
+   cp .env.example .env
+   # Add your GOOGLE_API_KEY and YouTube/Calendar Refresh Tokens
+   ```
+3. **Run**:
+   ```bash
+   python app.py
+   ```
+   Access the **Hermes Dashboard** at `http://localhost:8080/app`.
 
-## Quickstart
+### Deployment to Cloud Run
 
-### Prerequisites
-- Python 3.11+
-- Google Cloud project with Firestore, Cloud Run, Cloud Storage enabled
-- `gcloud` CLI authenticated
-- Gemini API key (from [Google AI Studio](https://aistudio.google.com))
-
-### Local Setup
-
-```bash
-git clone <repo-url>
-cd content-pipeline-agents
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run locally
-python app.py
-# or
-uvicorn app:app --reload --port 8080
-```
-
-### Environment Variables
-
-See `.env.example` for the full list. Minimum required:
-
-```bash
-GOOGLE_API_KEY=AIza...          # Gemini API key from AI Studio
-GOOGLE_CLOUD_PROJECT=my-project # GCP project ID
-```
-
-### Demo Endpoint
-
-```bash
-# Run the full pipeline
-curl -X POST http://localhost:8080/pipeline \
-  -H "Content-Type: application/json" \
-  -d '{
-    "request": "Create a YouTube Short about the latest AI breakthroughs",
-    "niche": "tech",
-    "creator_id": "default"
-  }'
-
-# Check job status
-curl http://localhost:8080/pipeline/{job_id}/status
-
-# Chat with coordinator directly
-curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What trending topics should I cover this week?"}'
-```
-
-### ADK Web UI (local dev)
-
-```bash
-# Launch the ADK web chat interface
-adk web agents/coordinator
-```
-
----
-
-## Deployment to Cloud Run
-
-### One-Command Deploy
-
+**Automated Deployment**:
 ```bash
 chmod +x deploy.sh
-./deploy.sh
+./deploy.sh --project YOUR_PROJECT_ID
 ```
 
-### Manual Steps
-
-```bash
-# 1. Build and push image
-gcloud builds submit --tag gcr.io/$PROJECT_ID/content-pipeline-agents
-
-# 2. Deploy to Cloud Run
-gcloud run deploy content-pipeline-agents \
-  --image gcr.io/$PROJECT_ID/content-pipeline-agents \
-  --platform managed \
-  --region us-central1 \
-  --memory 2Gi \
-  --timeout 3600 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
-  --set-secrets "GOOGLE_API_KEY=google-api-key:latest" \
-  --allow-unauthenticated
-
-# 3. Deploy Analytics Agent as a Cloud Run Job (cron)
-gcloud run jobs deploy analytics-agent \
-  --image gcr.io/$PROJECT_ID/content-pipeline-agents \
-  --command python \
-  --args "agents/analytics/run_job.py" \
-  --region us-central1
-
-# 4. Schedule Analytics Job (every day at 10am UTC)
-gcloud scheduler jobs create http analytics-cron \
-  --schedule "0 10 * * *" \
-  --uri "https://us-central1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/$PROJECT_ID/jobs/analytics-agent:run" \
-  --oauth-service-account-email "$SA_EMAIL"
-```
+**Manual Deployment Steps**:
+1. **Build**: `gcloud builds submit --tag gcr.io/PROJECT_ID/hermes`
+2. **Deploy Service**: `gcloud run deploy hermes --image gcr.io/PROJECT_ID/hermes --memory 2Gi --timeout 3600 --allow-unauthenticated`
+3. **Deploy Analytics Job**: `gcloud run jobs create analytics-agent --image gcr.io/PROJECT_ID/hermes --command python --args "agents/analytics/run_job.py"`
 
 ---
 
-## Data Model (Firestore)
+## Scaling to Microservices
 
-```
-/topics/{topic_id}
-  title, niche, source, score, used_at, created_at
-
-/research_briefs/{brief_id}
-  topic_id, summary, key_facts[], quotes[], sources[], created_at
-
-/scripts/{script_id}
-  brief_id, niche, script_text, title, description, tags[], platform, created_at
-
-/videos/{video_id}
-  script_id, status (pending|processing|done|failed), youtube_url,
-  youtube_video_id, published_at, created_at
-
-/schedules/{schedule_id}
-  video_id, publish_at, calendar_event_id, platform, created_at
-
-/analytics/{video_id}
-  views, watch_time_minutes, avg_view_pct, likes, comments,
-  impressions, ctr, fetched_at
-
-/creator_profiles/{creator_id}
-  niche, tone, pacing, cta, voice_id, caption_style, music_mood
-```
-
----
-
-## The Feedback Loop (Flywheel)
-
-```
-Analytics Agent reads YouTube metrics
-        ↓
-Updates /analytics/{video_id} in Firestore
-        ↓
-Recalculates topic score: high watch-time → score +
-        ↓
-Ideas Agent queries topics ordered by score
-        ↓
-Next content cycle prioritises proven formats
-        ↓
-Channel grows → better analytics → smarter ideas
-```
-
----
-
-## Agent Interaction Flow
-
-```
-POST /pipeline {"request": "AI trends video for Tuesday", "niche": "tech"}
-    │
-    ▼ Coordinator
-    │  1. Parses: topic_hint="AI trends", deadline="Tuesday", niche="tech"
-    │
-    ├──► Ideas Agent
-    │      - fetch_hackernews_trending(niche="tech")
-    │      - fetch_google_trends(keywords=["AI", "machine learning"])
-    │      - get_past_topics(niche="tech", limit=20)  ← avoid repeats
-    │      - Returns: [{title, score, novelty_score}, ...]
-    │
-    ├──► Research Agent (with chosen topic)
-    │      - web_search("AI trends 2025 breakthroughs")
-    │      - web_search("AI statistics 2025")
-    │      - synthesise_brief(raw_results)
-    │      - save_research_brief(brief) → Firestore
-    │      - Returns: {summary, key_facts, quotes, sources}
-    │
-    ├──► Script Agent (with research brief)
-    │      - get_creator_style(creator_id, niche)  ← from Firestore
-    │      - (Gemini writes the script using brief + style)
-    │      - save_script(script) → Firestore
-    │      - Returns: {script, title, description, tags}
-    │
-    ├──► Production Agent (async background)
-    │      - generate_voiceover(script) → Edge TTS / ElevenLabs
-    │      - generate_images(scene_prompts) → Gemini Imagen
-    │      - assemble_video(frames, audio, captions) → ffmpeg
-    │      - upload_to_youtube(video, metadata) → YouTube API
-    │      - Returns: {job_id, status_url}
-    │
-    └──► Scheduler Agent
-           - find_optimal_post_time(niche, deadline)
-           - create_calendar_event(title, datetime)
-           - schedule_youtube_publish(video_id, publish_at)
-           - Returns: {publish_at, calendar_event_id}
-    │
-    ▼ Coordinator assembles response
-    Returns: {job_id, topic, publish_at, calendar_event_id, status_url}
-```
-
----
-
-## MCP Server Availability Notes
-
-For future extension with Model Context Protocol:
-
-| Service | MCP Server | Status |
-|---|---|---|
-| Google Calendar | `nspady/google-calendar-mcp` | Community — OAuth2, full CRUD |
-| Firestore | `google/firestore-mcp` | In development |
-| Firecrawl | `firecrawl-dev/mcp-server-firecrawl` | Official, production-ready |
-| Tavily | `tavily-ai/tavily-mcp` | Official, production-ready |
-| GitHub | `github/mcp-server` | Official |
-| Supabase | `supabase/mcp-server-supabase` | Official |
-| YouTube | Community scrapers only | Read-only |
-| YouTube Analytics | REST API only | No MCP yet |
-| Buffer/Hootsuite | REST API only | No MCP yet |
-
-Current implementation uses direct API calls for Calendar and Analytics (faster than MCP for Cloud Run).
-
----
-
-## Extending to True Microservices
-
-Each agent can be extracted to its own Cloud Run service by:
-
-1. Each agent folder gets its own `Dockerfile` and `requirements.txt`
-2. Coordinator uses HTTP `AgentTool` pattern instead of in-process:
-
-```python
-# Coordinator calls Ideas Agent via HTTP instead of in-process
-import httpx
-
-async def call_ideas_agent(niche: str, limit: int = 5) -> dict:
-    """Call the Ideas Agent Cloud Run service."""
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{IDEAS_AGENT_URL}/run",
-            json={"niche": niche, "limit": limit},
-            timeout=60
-        )
-    return resp.json()
-```
-
-The current monorepo structure is designed so this extraction is a ~5 minute change per agent.
+Each agent is designed as a standalone module. To convert to true microservices:
+1. Assign a unique `Dockerfile` to each agent folder.
+2. Update the **Coordinator Agent** `AgentTool` definitions to use HTTP endpoints instead of direct function calls.
+3. The monorepo structure allows this transition in ~5 minutes per agent.

@@ -2,6 +2,8 @@
 Ideas Agent — discovers trending content topics across multiple sources,
 cross-references with past coverage, and returns ranked novel topic suggestions.
 """
+from typing import Optional
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.ideas.tools import (
@@ -13,9 +15,14 @@ from agents.ideas.tools import (
 )
 from shared.config import settings
 
+class IdeasInput(BaseModel):
+    niche: str = Field(description="The niche to find trending topics for (e.g. 'tech', 'finance').")
+    context: Optional[str] = Field(None, description="Optional context or specific topic hint from the user.")
+
 root_agent = Agent(
     name="ideas_agent",
     model=settings.gemini_model,
+    input_schema=IdeasInput,
     description=(
         "Discovers trending YouTube content topics from HackerNews, Google Trends, "
         "and web search. Avoids repeating recently covered topics. "
@@ -25,27 +32,36 @@ root_agent = Agent(
 
 Your job is to find the best trending topic for a YouTube Short based on the requested niche.
 
+## Handling User Context
+- If the user provides a `context` (topic hint or specific request), prioritize investigating and using that specific topic.
+- Always call `get_past_topics` first to check if the suggested topic (or very similar ones) has been covered in the last 30 days.
+- If the suggested topic is novel, use it as your `chosen_topic`.
+- If the suggested topic has been covered recently, suggest a fresh angle or a closely related trending topic instead.
+
 ## Workflow
 1. Call `get_past_topics` with the given niche to know what topics have been recently covered.
-2. Call `fetch_hackernews_trending` to get what's hot on Hacker News (good for tech/science).
-3. Call `search_trending_topics` with the niche to find relevant trending content.
-4. Optionally call `fetch_google_trends` with 3-5 relevant keywords for the niche.
-5. Cross-reference results: filter out topics too similar to past titles.
-6. Rank the remaining topics by: trending score × novelty (new = 1.0, recently covered = 0.0).
-7. Call `save_chosen_topic` to persist the top choice.
-8. Return a structured JSON response with:
+2. If `context` contains a specific topic:
+   - Evaluates it against `past_titles`.
+   - If novel: use this as the `chosen_topic`.
+   - If not novel: search for a fresh angle on this topic using `search_trending_topics`.
+3. If no specific topic hint in `context`:
+   - Call `fetch_hackernews_trending` (for tech/science niches).
+   - Call `search_trending_topics` with the niche to find relevant trending content.
+   - Optionally call `fetch_google_trends` with 3-5 keywords.
+4. Rank the topics (including any from user context) by: trending score × novelty.
+5. Call `save_chosen_topic` to persist the top choice.
+6. Return a structured JSON response with:
    - `chosen_topic`: the best topic title
    - `topic_id`: from save_chosen_topic
    - `topic_url`: source URL
-   - `source`: where it came from
-   - `rationale`: 1-2 sentences explaining why this topic was chosen
-   - `alternatives`: list of 2-3 runner-up topics
+   - `source`: where it came from ("manual" if from context, else the fetch source)
+   - `rationale`: why this topic was chosen
+   - `alternatives`: 2-3 runner-up topics
 
 ## Rules
 - Never suggest a topic that appears in past_titles unless it was covered >30 days ago.
-- Prefer topics with concrete angles ("GPT-5 beats human doctors at diagnosis") over vague ones ("AI is advancing").
-- For non-tech niches, use `search_trending_topics` as the primary source.
-- Always save the chosen topic before returning.
+- Prefer topics with concrete angles over vague ones.
+- Always call save_chosen_topic before returning.
 """,
     tools=[
         fetch_hackernews_trending,

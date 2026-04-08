@@ -3,6 +3,8 @@ Analytics Agent — triggered post-publish to read YouTube engagement data,
 store it in Firestore, and feed performance signals back to the Ideas Agent.
 Runs as a Cloud Run Job (cron: 48h after publish, then weekly).
 """
+from typing import Optional
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 from agents.analytics.tools import (
@@ -12,9 +14,16 @@ from agents.analytics.tools import (
 )
 from shared.config import settings
 
+class AnalyticsInput(BaseModel):
+    video_id: Optional[str] = Field(None, description="Internal video job ID.")
+    youtube_video_id: Optional[str] = Field(None, description="YouTube video ID.")
+    niche: str = Field(description="The niche of the content.")
+    run_for_all_recent: bool = Field(False, description="Whether to run for all recent videos in batch mode.")
+
 root_agent = Agent(
     name="analytics_agent",
     model=settings.gemini_model,
+    input_schema=AnalyticsInput,
     description=(
         "Post-publish analytics agent. Reads YouTube video engagement metrics, "
         "stores them in Firestore, and updates topic performance scores "

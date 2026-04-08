@@ -16,14 +16,18 @@ class Settings(BaseSettings):
 
     # ── Gemini / Google AI ──────────────────────────────────
     google_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3-flash-preview"
     # Set to "true" to route through Vertex AI instead of AI Studio
     google_genai_use_vertexai: bool = False
     google_cloud_project: str = ""
     google_cloud_region: str = "us-central1"
     google_cloud_location: str = "us-central1"
 
-    # ── Firestore ───────────────────────────────────────────
+    # ── Image Generation ────────────────────────────────────
+    image_provider: str = "imagen"  # "imagen" or "flux2"
+    modal_flux2_endpoint_url: Optional[str] = None
+    modal_token_id: Optional[str] = None
+    modal_token_secret: Optional[str] = None
     firestore_database: str = "(default)"
 
     # ── Cloud Storage ───────────────────────────────────────
