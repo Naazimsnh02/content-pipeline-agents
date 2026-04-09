@@ -11,6 +11,13 @@
 
 ---
 
+## 🌎 Project Resources
+- **📺 Watch the Demo**: [https://youtu.be/LYVMAdIu0ZU](https://youtu.be/LYVMAdIu0ZU)
+- **🚀 Interactive Dashboard**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app)
+- **🩺 API Health**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health)
+
+---
+
 ## ✨ System Features
 
 - 🧠 **Autonomous Orchestration**: Powered by Google's **Agent Development Kit (ADK)** for complex task decomposition.
@@ -135,10 +142,6 @@ Analytics data is not just stored — it is actively used to improve the system:
 ---
 
 ## Setup & Deployment
-
-### 🌎 Live Links
-- **Interactive Dashboard**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/app)
-- **API Health**: [https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health](https://content-pipeline-agents-mlk6ypldqq-uc.a.run.app/health)
 
 ### Local Quickstart
 
