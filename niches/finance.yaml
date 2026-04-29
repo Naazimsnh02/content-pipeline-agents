@@ -1,0 +1,48 @@
+# Finance niche profile
+niche: finance
+display_name: Personal Finance & Investing
+
+# Script style
+tone: "clear, authoritative, relatable — no jargon without explanation"
+pacing: "medium — deliberate, let numbers land"
+hook_style: "open with a money stat that feels unreal"
+cta: "Follow for daily money insights"
+word_count_target: 150
+format: "hook (5s) → problem (10s) → 3 actionable tips (35s) → takeaway (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "professional, clean charts, green and gold tones, stock market aesthetics"
+color_palette: ["#00C853", "#FFD700", "#1A1A2E", "#FFFFFF"]
+mood: "authoritative, empowering, urgent"
+
+# Caption aesthetics
+caption_highlight_color: "#00C853"
+caption_font_weight: "bold"
+caption_style: "word-by-word green highlight on dark background"
+
+# Music
+music_mood: "corporate, motivational, subtle"
+music_energy: "medium"
+music_bpm_range: [90, 110]
+
+# Voice
+voice_style: "confident, measured, trustworthy"
+voice_id: "en-US-GuyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "trending personal finance investing news this week"
+  - "stock market news this week"
+  - "personal finance tips viral this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 12
+    reason: "Start-of-week financial planning mindset"
+  - day: "Wednesday"
+    hour_utc: 13
+    reason: "Mid-week market update time"
+  - day: "Friday"
+    hour_utc: 13
+    reason: "End-of-week financial review"

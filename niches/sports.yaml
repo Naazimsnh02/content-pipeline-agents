@@ -1,0 +1,48 @@
+# Sports niche profile
+niche: sports
+display_name: Sports & Athletics
+
+# Script style
+tone: "passionate, fast, insider — like a sports commentator who knows the stats"
+pacing: "fast — match the energy of the game"
+hook_style: "open with the most insane stat or the biggest upset"
+cta: "Follow for daily sports highlights"
+word_count_target: 155
+format: "hook (5s) → the moment (10s) → 3 key stats or plays (35s) → what it means (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "stadium energy, action shots, bold team colors, dynamic motion"
+color_palette: ["#E74C3C", "#F39C12", "#1A1A2E", "#FFFFFF"]
+mood: "passionate, high-energy, competitive"
+
+# Caption aesthetics
+caption_highlight_color: "#E74C3C"
+caption_font_weight: "extrabold"
+caption_style: "word-by-word red highlight, sports broadcast style"
+
+# Music
+music_mood: "pump-up, stadium anthem, high energy"
+music_energy: "very high"
+music_bpm_range: [130, 155]
+
+# Voice
+voice_style: "passionate, fast, commentator energy"
+voice_id: "en-US-DavisNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "sports news viral this week"
+  - "sports record broken this week"
+  - "athlete controversy trending this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 10
+    reason: "Post-weekend game recap"
+  - day: "Saturday"
+    hour_utc: 18
+    reason: "Game day peak"
+  - day: "Sunday"
+    hour_utc: 20
+    reason: "Sunday night sports wrap"

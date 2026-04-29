@@ -1,0 +1,48 @@
+# Crypto niche profile
+niche: crypto
+display_name: Crypto & Web3
+
+# Script style
+tone: "sharp, data-driven, no hype — cut through the noise with facts"
+pacing: "fast — crypto moves fast, so does the script"
+hook_style: "open with a price move, on-chain signal, or regulatory bombshell"
+cta: "Follow for daily crypto signals"
+word_count_target: 160
+format: "hook (5s) → what happened (10s) → 3 key signals (35s) → what it means (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "dark mode, blockchain aesthetics, price charts, neon green and orange on black"
+color_palette: ["#F7931A", "#627EEA", "#0D0D0D", "#00FF88"]
+mood: "urgent, analytical, insider"
+
+# Caption aesthetics
+caption_highlight_color: "#F7931A"
+caption_font_weight: "bold"
+caption_style: "word-by-word bitcoin-orange highlight on dark background"
+
+# Music
+music_mood: "electronic, tense, futuristic"
+music_energy: "high"
+music_bpm_range: [125, 145]
+
+# Voice
+voice_style: "sharp, fast, analytical"
+voice_id: "en-US-TonyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "crypto bitcoin news this week"
+  - "DeFi Web3 trending this week"
+  - "cryptocurrency regulation news this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 10
+    reason: "Weekly crypto market open"
+  - day: "Wednesday"
+    hour_utc: 14
+    reason: "Mid-week trading activity"
+  - day: "Friday"
+    hour_utc: 15
+    reason: "End-of-week market wrap"

@@ -1,0 +1,48 @@
+# Science niche profile
+niche: science
+display_name: Science & Discovery
+
+# Script style
+tone: "curious, awe-inspiring, accessible — Carl Sagan meets TikTok"
+pacing: "medium — let the wonder land"
+hook_style: "open with a fact that breaks the viewer's mental model of reality"
+cta: "Follow for mind-blowing science daily"
+word_count_target: 155
+format: "hook (5s) → the discovery (10s) → 3 implications (35s) → big picture (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "space, microscopy, nature macro shots, clean scientific diagrams, deep blues and purples"
+color_palette: ["#4A90D9", "#7B68EE", "#0D0D1A", "#E8F4FD"]
+mood: "awe-inspiring, curious, mind-expanding"
+
+# Caption aesthetics
+caption_highlight_color: "#4A90D9"
+caption_font_weight: "bold"
+caption_style: "word-by-word blue highlight on dark background"
+
+# Music
+music_mood: "cinematic, ambient, wonder-inducing"
+music_energy: "medium"
+music_bpm_range: [85, 110]
+
+# Voice
+voice_style: "thoughtful, clear, sense of wonder"
+voice_id: "en-US-AriaNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "breakthrough science discoveries this week"
+  - "new scientific study viral this week"
+  - "space discovery news this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Tuesday"
+    hour_utc: 15
+    reason: "Science news cycle peak"
+  - day: "Thursday"
+    hour_utc: 14
+    reason: "Pre-weekend curiosity browsing"
+  - day: "Saturday"
+    hour_utc: 11
+    reason: "Weekend learning mindset"

@@ -1,0 +1,48 @@
+# Mindset niche profile
+niche: mindset
+display_name: Mindset & Self-Improvement
+
+# Script style
+tone: "empathetic, direct, transformative — speak to the person who's stuck"
+pacing: "medium — let the insight land, pause for effect"
+hook_style: "open with a relatable struggle or a counterintuitive truth about success"
+cta: "Follow for daily mindset shifts"
+word_count_target: 150
+format: "hook (5s) → the struggle (10s) → 3 mindset shifts (35s) → transformation (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "minimalist, sunrise/nature, clean typography, journaling and meditation aesthetics"
+color_palette: ["#8E44AD", "#F1C40F", "#FDFEFE", "#2C3E50"]
+mood: "inspiring, calm, transformative"
+
+# Caption aesthetics
+caption_highlight_color: "#8E44AD"
+caption_font_weight: "bold"
+caption_style: "word-by-word purple highlight on light background"
+
+# Music
+music_mood: "inspirational, calm, uplifting piano"
+music_energy: "low-medium"
+music_bpm_range: [75, 100]
+
+# Voice
+voice_style: "warm, empathetic, measured"
+voice_id: "en-US-AriaNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "mindset self improvement viral this week"
+  - "productivity habit psychology trending"
+  - "mental health awareness viral content"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 7
+    reason: "Monday morning motivation"
+  - day: "Sunday"
+    hour_utc: 9
+    reason: "Sunday reflection and planning"
+  - day: "Wednesday"
+    hour_utc: 8
+    reason: "Mid-week motivation boost"

@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/static/logo.png" />
+  <link rel="apple-touch-icon" href="/static/logo.png" />
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -32,6 +35,7 @@
       --font-body: 'Figtree', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       --sidebar-w: 240px;
+      --sidebar-collapsed-w: 56px;
     }
 
     html, body {
@@ -50,6 +54,10 @@
       display: grid;
       grid-template-columns: var(--sidebar-w) 1fr;
       height: 100vh;
+      transition: grid-template-columns 0.25s ease;
+    }
+    .app-shell.sidebar-collapsed {
+      grid-template-columns: var(--sidebar-collapsed-w) 1fr;
     }
 
     /* ── SIDEBAR ── */
@@ -60,32 +68,55 @@
       flex-direction: column;
       padding: 20px 0;
       overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
       z-index: 10;
+      width: var(--sidebar-w);
+      transition: width 0.25s ease;
+      flex-shrink: 0;
+    }
+    .app-shell.sidebar-collapsed .sidebar {
+      width: var(--sidebar-collapsed-w);
+    }
+
+    /* Toggle button */
+    .sidebar-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle:hover {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border-2);
     }
 
     .sidebar-logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 0 20px 24px;
+      padding: 0 13px 24px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 16px;
       text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .logo-mark {
       width: 30px;
       height: 30px;
-      background: var(--gold);
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-disp);
-      font-weight: 800;
-      font-size: 15px;
-      color: var(--bg);
       flex-shrink: 0;
+      object-fit: contain;
     }
     .logo-text {
       font-family: var(--font-disp);
@@ -93,7 +124,11 @@
       font-size: 16px;
       color: var(--text);
       letter-spacing: 0.08em;
+      transition: opacity 0.2s, width 0.2s;
+      overflow: hidden;
     }
+    .app-shell.sidebar-collapsed .logo-text { opacity: 0; width: 0; }
+    .app-shell.sidebar-collapsed .sidebar-logo { justify-content: center; padding: 0 0 24px; }
 
     .nav-section-label {
       font-family: var(--font-mono);
@@ -105,7 +140,11 @@
       padding: 0 20px;
       margin-bottom: 6px;
       margin-top: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity 0.2s;
     }
+    .app-shell.sidebar-collapsed .nav-section-label { opacity: 0; height: 0; margin: 0; padding: 0; }
 
     .nav-item {
       display: flex;
@@ -120,7 +159,43 @@
       transition: all 0.15s;
       border-left: 2px solid transparent;
       position: relative;
+      white-space: nowrap;
+      overflow: hidden;
     }
+    .app-shell.sidebar-collapsed .nav-item {
+      justify-content: center;
+      padding: 10px 0;
+      border-left-color: transparent !important;
+    }
+    .app-shell.sidebar-collapsed .nav-item.active {
+      border-left-color: transparent !important;
+    }
+    .app-shell.sidebar-collapsed .nav-item .nav-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s, width 0.2s; }
+    .app-shell.sidebar-collapsed .nav-badge { display: none; }
+
+    /* Tooltip on collapsed icons */
+    .app-shell.sidebar-collapsed .nav-item::after {
+      content: attr(data-label);
+      position: absolute;
+      left: calc(var(--sidebar-collapsed-w) + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 7px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+      font-family: var(--font-body);
+    }
+    .app-shell.sidebar-collapsed .nav-item:hover::after { opacity: 1; }
+
     .nav-item:hover {
       background: var(--surface);
       color: var(--text);
@@ -131,6 +206,7 @@
       border-left-color: var(--gold);
     }
     .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-item .nav-label { transition: opacity 0.2s, width 0.2s; }
     .nav-badge {
       margin-left: auto;
       background: var(--gold);
@@ -146,7 +222,17 @@
       margin-top: auto;
       padding: 16px 20px;
       border-top: 1px solid var(--border);
+      overflow: hidden;
+      transition: padding 0.25s;
     }
+    .app-shell.sidebar-collapsed .sidebar-footer {
+      padding: 12px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app-shell.sidebar-collapsed .sidebar-footer > *:not(.mode-dot-only) { display: none !important; }
+    .app-shell.sidebar-collapsed .mode-dot-only { display: flex !important; }
     .mode-pill {
       display: flex;
       align-items: center;
@@ -229,6 +315,15 @@
       color: var(--text);
       background: var(--surface);
     }
+    .btn-primary {
+      background: var(--gold);
+      color: var(--bg);
+    }
+    .btn-primary:hover {
+      background: var(--gold-b);
+      box-shadow: 0 4px 16px var(--gold-glow);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-danger {
       background: rgba(232,85,85,0.12);
       color: var(--red);
@@ -553,7 +648,7 @@
     }
     .tracker-layout {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: minmax(280px, 1fr) minmax(340px, 1.4fr);
       gap: 20px;
     }
 
@@ -669,7 +764,92 @@
     }
     .script-textarea:focus { border-color: var(--gold); }
 
-    /* ── CHAT VIEW ── */
+    /* Coordinator output formatted box */
+    .coordinator-output-box {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-2);
+      min-height: 200px;
+      max-height: 420px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .coordinator-output-box::-webkit-scrollbar { width: 4px; }
+    .coordinator-output-box::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    /* ── DETAIL TABS ── */
+    .detail-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      font-family: var(--font-mono);
+    }
+    .detail-tab:hover { color: var(--text-2); }
+    .detail-tab.active { color: var(--gold-b); border-bottom-color: var(--gold); }
+    .detail-tab-panel { display: none; }
+    .detail-tab-panel.active { display: block; }
+
+    /* ── TWITTER PANEL ── */
+    .twitter-thread { display: flex; flex-direction: column; gap: 10px; }
+    .tweet-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .tweet-card:hover { border-color: var(--border-2); }
+    .tweet-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-bottom: 6px; }
+    .tweet-text { font-size: 13.5px; color: var(--text); line-height: 1.55; white-space: pre-wrap; }
+    .tweet-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .tweet-chars { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+    .tweet-chars.warn { color: var(--gold-b); }
+    .tweet-chars.over { color: var(--red); }
+    .long-post-box {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .hashtag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .hashtag-chip {
+      background: rgba(139,124,248,0.1);
+      border: 1px solid rgba(139,124,248,0.25);
+      color: var(--violet);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+    .sse-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+      margin-right: 4px;
+    }
+
     .chat-layout {
       display: flex;
       flex-direction: column;
@@ -829,6 +1009,98 @@
       color: var(--text-3);
     }
 
+    /* ── CHAT LAYOUT ── */
+    .chat-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* ── CHAT TOPBAR ACTIONS ── */
+    .chat-topbar-actions {
+      display: none; /* shown via JS when chat view is active */
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-topbar-actions.visible { display: flex; }
+
+    /* ── CHAT HISTORY SCREEN ── */
+    .chat-history-screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      animation: fadeIn 0.15s ease;
+    }
+    .chat-history-screen.visible { display: flex; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .chat-history-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .chat-history-title {
+      font-family: var(--font-disp);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .chat-history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      overflow-y: auto;
+      flex: 1;
+      padding-bottom: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .chat-history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chat-history-card:hover {
+      border-color: var(--gold);
+      background: var(--surface-2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .chat-history-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .chat-history-card-meta {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: var(--font-mono);
+      display: flex;
+      gap: 12px;
+    }
+
+    /* ── SESSION INFO ── */
+    .chat-session-item {
+      padding: 9px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s;
+      margin-bottom: 2px;
+    }
+    .chat-session-item:hover { background: var(--surface); }
+    .chat-session-item.active { background: var(--surface-2); border: 1px solid var(--border); }
+    .chat-session-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .chat-session-meta { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); margin-top: 2px; }
+
     /* ── TYPING INDICATOR ── */
     .typing {
       display: flex;
@@ -879,7 +1151,19 @@
       border-bottom: 1px solid var(--border);
       position: relative;
       overflow: hidden;
+      cursor: default;
     }
+    .video-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 2;
+      transition: opacity 0.3s;
+    }
+    .video-thumb img.loading { opacity: 0; }
+    .video-thumb img.loaded { opacity: 1; }
     .video-thumb-gradient {
       position: absolute;
       inset: 0;
@@ -989,52 +1273,440 @@
     /* responsive */
     @media (max-width: 900px) {
       :root { --sidebar-w: 56px; }
-      .logo-text, .nav-section-label, .nav-item span:not(.nav-icon) { display: none; }
-      .sidebar-footer { display: none; }
+      .logo-text, .nav-section-label, .nav-item .nav-label { display: none; }
+      .sidebar-footer .mode-pill, .sidebar-footer .user-pill,
+      .sidebar-footer .yt-connect-pill, .sidebar-footer .cal-connect-pill { display: none !important; }
+      .sidebar-footer .mode-dot-only { display: flex !important; }
       .nav-item { justify-content: center; padding: 12px; }
       .nav-badge { display: none; }
+    }
+    /* ── AUTH SCREEN ── */
+    .auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: var(--bg);
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+    }
+    .auth-screen.hidden { display: none; }
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-2);
+      color: var(--text-3);
+      transition: all 0.15s;
+      border: none;
+      font-family: var(--font-body);
+    }
+    .auth-tab.active {
+      background: var(--gold-dim);
+      color: var(--gold-b);
+    }
+    .auth-form { display: flex; flex-direction: column; gap: 14px; }
+    .auth-form.hidden { display: none; }
+    .auth-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      font-family: var(--font-mono);
+    }
+    .auth-error {
+      background: rgba(232,85,85,0.1);
+      border: 1px solid rgba(232,85,85,0.25);
+      color: var(--red);
+      font-size: 12.5px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: none;
+    }
+    .auth-error.visible { display: block; }
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0;
+      color: var(--text-3);
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-body);
+    }
+    .btn-google:hover {
+      background: var(--surface);
+      border-color: var(--text-3);
+    }
+    .btn-google svg { flex-shrink: 0; }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+    .user-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-disp);
+      flex-shrink: 0;
+    }
+    .user-email {
+      font-size: 11px;
+      color: var(--text-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+      transition: color 0.15s;
+    }
+    .logout-btn:hover { color: var(--red); }
+    .yt-connect-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .yt-connect-pill:hover {
+      border-color: rgba(232,85,85,0.3);
+      background: rgba(232,85,85,0.06);
+    }
+    .yt-connect-pill.connected {
+      border-color: rgba(62,207,142,0.3);
+      cursor: default;
+    }
+    .yt-connect-pill .yt-icon { font-size: 14px; flex-shrink: 0; }
+    .yt-connect-pill .yt-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .yt-connect-pill .yt-status { font-size: 9px; font-family: var(--font-mono); }
+    .yt-connect-pill.connected .yt-status { color: var(--green); }
+    .yt-connect-pill:not(.connected) .yt-status { color: var(--gold-b); }
+
+    /* ── Calendar connect pill (mirrors YouTube pill with blue accent) ── */
+    .cal-connect-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .cal-connect-pill:hover {
+      border-color: rgba(66,133,244,0.35);
+      background: rgba(66,133,244,0.06);
+    }
+    .cal-connect-pill.connected {
+      border-color: rgba(62,207,142,0.3);
+      cursor: default;
+    }
+    .cal-connect-pill .cal-icon { font-size: 14px; flex-shrink: 0; }
+    .cal-connect-pill .cal-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cal-connect-pill .cal-status { font-size: 9px; font-family: var(--font-mono); }
+    .cal-connect-pill.connected .cal-status { color: var(--green); }
+    .cal-connect-pill:not(.connected) .cal-status { color: rgba(66,133,244,0.9); }
+
+    /* ── ANALYTICS VIEW ── */
+    .analytics-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .analytics-card:hover {
+      border-color: var(--border-2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .analytics-card-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .analytics-card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .analytics-card-meta {
+      font-size: 10.5px;
+      color: var(--text-3);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .analytics-card-body {
+      padding: 14px 18px 16px;
+    }
+    .analytics-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .analytics-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .analytics-metric-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+    .analytics-metric-value {
+      font-family: var(--font-disp);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .analytics-grade {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      font-family: var(--font-disp);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .analytics-grade.grade-a { background: rgba(62,207,142,0.15); color: var(--green); border: 1px solid rgba(62,207,142,0.3); }
+    .analytics-grade.grade-b { background: var(--gold-dim); color: var(--gold-b); border: 1px solid rgba(200,135,58,0.3); }
+    .analytics-grade.grade-c { background: rgba(232,85,85,0.1); color: var(--red); border: 1px solid rgba(232,85,85,0.25); }
+    .analytics-card-footer {
+      padding: 10px 18px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .analytics-no-data {
+      padding: 24px 18px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 12.5px;
     }
   </style>
 </head>
 <body>
 
-<div class="app-shell">
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-mark">H</div>
+      <span class="logo-text">HERMES</span>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- Google Sign-In -->
+    <div style="margin-bottom:16px;">
+      <button class="btn-google" id="google-signin-btn" onclick="handleGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider">or</div>
+    </div>
+
+    <!-- Login Form -->
+    <form class="auth-form" id="login-form" onsubmit="handleLogin(event)">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" required />
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:11px;" id="login-btn">
+        Sign In
+      </button>
+    </form>
+
+    <!-- Signup Form -->
+    <form class="auth-form hidden" id="signup-form" onsubmit="handleSignup(event)">
+      <div class="auth-field">
+        <label>Display Name</label>
+        <input type="text" id="signup-name" placeholder="Your name" />
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" required />
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min 6 characters" minlength="6" required />
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:11px;" id="signup-btn">
+        Create Account
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell" style="display:none;">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <a href="/" class="sidebar-logo">
-      <div class="logo-mark">H</div>
+      <img src="/static/logo.png" class="logo-mark" alt="Hermes Logo" />
       <span class="logo-text">HERMES</span>
     </a>
 
     <div class="nav-section-label">Pipeline</div>
-    <div class="nav-item active" data-view="dashboard">
+    <div class="nav-item active" data-view="dashboard" data-label="Dashboard">
       <span class="nav-icon">⊞</span>
-      <span>Dashboard</span>
+      <span class="nav-label">Dashboard</span>
     </div>
-    <div class="nav-item" data-view="new-pipeline">
+    <div class="nav-item" data-view="new-pipeline" data-label="New Pipeline">
       <span class="nav-icon">✦</span>
-      <span>New Pipeline</span>
+      <span class="nav-label">New Pipeline</span>
     </div>
-    <div class="nav-item" data-view="job-tracker">
+    <div class="nav-item" data-view="job-tracker" data-label="Job Tracker">
       <span class="nav-icon">◎</span>
-      <span>Job Tracker</span>
+      <span class="nav-label">Job Tracker</span>
     </div>
 
     <div class="nav-section-label">Studio</div>
-    <div class="nav-item" data-view="chat">
+    <div class="nav-item" data-view="chat" data-label="Chat">
       <span class="nav-icon">◈</span>
-      <span>Chat</span>
+      <span class="nav-label">Chat</span>
     </div>
-    <div class="nav-item" data-view="library">
+    <div class="nav-item" data-view="library" data-label="Library">
       <span class="nav-icon">▣</span>
-      <span>Library</span>
+      <span class="nav-label">Library</span>
+    </div>
+    <div class="nav-item" data-view="analytics" data-label="Analytics">
+      <span class="nav-icon">◑</span>
+      <span class="nav-label">Analytics</span>
+    </div>
+
+    <div class="nav-section-label">Settings</div>
+    <div class="nav-item" data-view="creator-profiles" data-label="Creator Profiles">
+      <span class="nav-icon">♟</span>
+      <span class="nav-label">Creator Profiles</span>
     </div>
 
     <div class="sidebar-footer">
+      <div class="mode-dot-only" style="display:none;margin-bottom:8px;" title="System status">
+        <div class="mode-dot"></div>
+      </div>
       <div class="mode-pill">
         <div class="mode-dot"></div>
         <span id="mode-label">Checking…</span>
+      </div>
+      <div class="user-pill" id="user-pill" style="display:none;">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span class="user-email" id="user-email"></span>
+        <button class="logout-btn" onclick="handleLogout()" title="Sign out">⏻</button>
+      </div>
+      <div class="yt-connect-pill" id="yt-pill" style="display:none;" onclick="handleYouTubeClick()">
+        <span class="yt-icon">▶</span>
+        <span class="yt-label" id="yt-label">Connect YouTube</span>
+        <span class="yt-status" id="yt-status"></span>
+      </div>
+      <div class="cal-connect-pill" id="cal-pill" style="display:none;" onclick="handleCalendarClick()">
+        <span class="cal-icon">📅</span>
+        <span class="cal-label" id="cal-label">Connect Calendar</span>
+        <span class="cal-status" id="cal-status"></span>
       </div>
     </div>
   </aside>
@@ -1042,8 +1714,26 @@
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
-      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="3" width="13" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="1" y="7" width="9" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="1" y="11" width="13" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+        </button>
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
       <div class="topbar-actions">
+        <!-- Chat-specific actions (shown only in chat view) -->
+        <div class="chat-topbar-actions" id="chat-topbar-actions">
+          <button class="btn btn-outline" onclick="showChatHistory()" id="chat-history-btn">
+            🕐 History
+          </button>
+          <button class="btn btn-outline" onclick="startNewChat()">
+            ✚ New Chat
+          </button>
+        </div>
         <a href="/docs" class="btn btn-outline" target="_blank">API Docs</a>
         <button class="btn btn-gold" onclick="navigate('new-pipeline')">
           ✦ New Pipeline
@@ -1069,7 +1759,7 @@
           <div class="stat-card violet">
             <div class="stat-label">Model</div>
             <div class="stat-value" style="font-size:14px;padding-top:8px;line-height:1.3;" id="stat-model">—</div>
-            <div class="stat-sub">gemini 3 flash</div>
+            <div class="stat-sub" id="stat-model-sub">loading…</div>
           </div>
           <div class="stat-card blue">
             <div class="stat-label">Status</div>
@@ -1110,14 +1800,9 @@
                 </div>
                 <div>
                   <label class="form-label">Niche</label>
-                  <div class="niche-chips" id="quick-niche-chips">
-                    <div class="chip selected" data-niche="tech">Tech</div>
-                    <div class="chip" data-niche="finance">Finance</div>
-                    <div class="chip" data-niche="fitness">Fitness</div>
-                    <div class="chip" data-niche="gaming">Gaming</div>
-                    <div class="chip" data-niche="business">Business</div>
-                    <div class="chip" data-niche="science">Science</div>
-                  </div>
+                  <select id="quick-niche-select" class="niche-select" onchange="state.selectedNiche.quick = this.value">
+                    <option value="tech" selected>Tech</option>
+                  </select>
                 </div>
                 <div>
                   <label class="form-label">Deadline (optional)</label>
@@ -1149,21 +1834,16 @@
             <div class="form-row" style="margin-bottom:16px;">
               <div class="form-field">
                 <label>Niche</label>
-                <div class="niche-chips" id="pipe-niche-chips">
-                  <div class="chip selected" data-niche="tech">Tech</div>
-                  <div class="chip" data-niche="finance">Finance</div>
-                  <div class="chip" data-niche="fitness">Fitness</div>
-                  <div class="chip" data-niche="gaming">Gaming</div>
-                  <div class="chip" data-niche="business">Business</div>
-                  <div class="chip" data-niche="science">Science</div>
-                  <div class="chip" data-niche="health">Health</div>
-                  <div class="chip" data-niche="crypto">Crypto</div>
-                </div>
+                <select id="pipe-niche-select" class="niche-select" onchange="state.selectedNiche.pipe = this.value">
+                  <option value="tech" selected>Tech</option>
+                </select>
               </div>
               <div class="form-field">
                 <label>Creator ID</label>
-                <input type="text" id="pipe-creator" placeholder="default" value="default" />
-                <span class="hint">References your creator profile settings</span>
+                <select id="pipe-creator">
+                  <option value="default" selected>default (niche fallback)</option>
+                </select>
+                <span class="hint">Select a creator profile or <a href="#" onclick="navigate('creator-profiles');return false;" style="color:var(--gold-b);">create one</a></span>
               </div>
             </div>
             <div class="form-field">
@@ -1213,8 +1893,28 @@
       <!-- ═══ CHAT ═══ -->
       <div id="view-chat" class="view">
         <div class="chat-layout">
+
+          <!-- History sub-screen (shown when History is clicked) -->
+          <div class="chat-history-screen" id="chat-history-screen">
+            <div class="chat-history-header-row">
+              <div class="chat-history-title">Chat History</div>
+              <button class="btn btn-outline" style="font-size:12px;" onclick="loadChatSessions()">
+                ↺ Refresh
+              </button>
+            </div>
+            <div class="chat-history-grid" id="chat-history-grid">
+              <div class="empty-state" style="grid-column:1/-1;" id="chat-history-empty">
+                <div class="empty-icon">💬</div>
+                <div class="empty-title">No chat history yet</div>
+                <div class="empty-desc">Start a new conversation and it will appear here.</div>
+                <button class="btn btn-gold" onclick="startNewChat()">✚ Start New Chat</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conversation screen (default) -->
           <div class="chat-messages" id="chat-messages">
-            <div class="msg agent">
+            <div class="msg agent" id="chat-welcome">
               <div class="msg-avatar">H</div>
               <div>
                 <div class="msg-bubble">
@@ -1225,7 +1925,7 @@
             </div>
           </div>
 
-          <div class="chat-input-area">
+          <div class="chat-input-area" id="chat-input-area">
             <div class="chat-hints">
               <div class="chat-hint" onclick="fillHint(this)">What's trending in tech this week?</div>
               <div class="chat-hint" onclick="fillHint(this)">Research OpenAI's latest model</div>
@@ -1251,16 +1951,142 @@
               <span id="session-id-display" style="color:var(--gold);font-family:var(--font-mono);">new</span>
             </div>
           </div>
+
         </div>
       </div>
 
+
       <!-- ═══ LIBRARY ═══ -->
       <div id="view-library" class="view">
-        <div class="empty-state">
-          <div class="empty-icon">▣</div>
-          <div class="empty-title">Your video library</div>
-          <div class="empty-desc">Completed pipeline jobs with YouTube links will appear here after production.</div>
-          <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create First Video</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-family:var(--font-disp);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;">Video Library</div>
+            <div style="font-size:13px;color:var(--text-3);">Completed pipeline jobs — download or view on YouTube</div>
+          </div>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;" onclick="loadLibrary()">↺ Refresh</button>
+        </div>
+        <div id="library-grid" class="library-grid">
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">▣</div>
+            <div class="empty-title">No videos yet</div>
+            <div class="empty-desc">Completed pipeline jobs will appear here after production.</div>
+            <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create First Video</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALYTICS ═══ -->
+      <div id="view-analytics" class="view">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-family:var(--font-disp);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;">Analytics</div>
+            <div style="font-size:13px;color:var(--text-3);">Post-publish performance metrics for your videos</div>
+          </div>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;" onclick="loadAnalytics()">↺ Refresh</button>
+        </div>
+
+        <!-- Summary stats row -->
+        <div class="stats-row" id="analytics-stats" style="margin-bottom:28px;">
+          <div class="stat-card gold">
+            <div class="stat-label">Total Views</div>
+            <div class="stat-value" id="a-stat-views">—</div>
+            <div class="stat-sub">across all videos</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Avg. View %</div>
+            <div class="stat-value" id="a-stat-avgview">—</div>
+            <div class="stat-sub">audience retention</div>
+          </div>
+          <div class="stat-card violet">
+            <div class="stat-label">Total Likes</div>
+            <div class="stat-value" id="a-stat-likes">—</div>
+            <div class="stat-sub">engagement</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Videos Tracked</div>
+            <div class="stat-value" id="a-stat-tracked">—</div>
+            <div class="stat-sub">with analytics data</div>
+          </div>
+        </div>
+
+        <!-- Video analytics cards -->
+        <div id="analytics-grid" class="library-grid">
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">No analytics yet</div>
+            <div class="empty-desc">Analytics appear here after videos are published and the analytics agent runs (typically 48h post-publish).</div>
+            <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create a Video</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CREATOR PROFILES ═══ -->
+      <div id="view-creator-profiles" class="view">
+        <div style="max-width:720px;margin:0 auto;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+            <div>
+              <div style="font-family:var(--font-disp);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;">Creator Profiles</div>
+              <div style="font-size:13px;color:var(--text-3);">Manage script style profiles — tone, pacing, hooks, and CTAs</div>
+            </div>
+          </div>
+
+          <!-- Profile form -->
+          <div class="card" style="margin-bottom:24px;">
+            <div class="card-header">
+              <span class="card-title" id="profile-form-title">New Profile</span>
+              <button class="btn btn-outline" style="padding:4px 12px;font-size:11px;" onclick="resetProfileForm()">✚ New</button>
+            </div>
+            <div class="card-body">
+              <div class="form-row" style="margin-bottom:14px;">
+                <div class="form-field">
+                  <label>Profile ID</label>
+                  <input type="text" id="prof-id" placeholder="e.g. my-channel" />
+                  <span class="hint">Unique identifier — used in pipeline requests</span>
+                </div>
+                <div class="form-field">
+                  <label>Tone</label>
+                  <input type="text" id="prof-tone" placeholder="e.g. witty, authoritative, casual" />
+                  <span class="hint">Voice personality for scripts</span>
+                </div>
+              </div>
+              <div class="form-row" style="margin-bottom:14px;">
+                <div class="form-field">
+                  <label>Pacing</label>
+                  <input type="text" id="prof-pacing" placeholder="e.g. fast, medium, slow" />
+                  <span class="hint">Script delivery speed</span>
+                </div>
+                <div class="form-field">
+                  <label>Hook Style</label>
+                  <input type="text" id="prof-hook" placeholder="e.g. shocking stat, bold question" />
+                  <span class="hint">How to open the video</span>
+                </div>
+              </div>
+              <div class="form-field" style="margin-bottom:16px;">
+                <label>Call to Action</label>
+                <input type="text" id="prof-cta" placeholder="e.g. Follow for more, Subscribe now" value="Follow for more" />
+                <span class="hint">Closing CTA line in every script</span>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-gold" onclick="saveProfile()">Save Profile</button>
+                <button class="btn btn-danger" id="prof-delete-btn" style="display:none;" onclick="deleteProfile()">Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Existing profiles list -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Your Profiles</span>
+              <button class="btn btn-outline" style="padding:4px 12px;font-size:11px;" onclick="loadCreatorProfiles()">↺ Refresh</button>
+            </div>
+            <div class="card-body" id="profiles-list">
+              <div class="empty-state" style="padding:40px 24px;">
+                <div class="empty-icon">♟</div>
+                <div class="empty-title">No profiles yet</div>
+                <div class="empty-desc">Create your first creator profile above. It will be available in the pipeline Creator ID dropdown.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1272,6 +2098,374 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script>
+  /* ── AUTH ── */
+  const auth = {
+    idToken: localStorage.getItem('hermes_id_token') || null,
+    refreshToken: localStorage.getItem('hermes_refresh_token') || null,
+    uid: localStorage.getItem('hermes_uid') || null,
+    email: localStorage.getItem('hermes_email') || null,
+    displayName: localStorage.getItem('hermes_display_name') || null,
+  };
+
+  function saveAuth(data) {
+    auth.idToken = data.id_token;
+    auth.refreshToken = data.refresh_token;
+    auth.uid = data.uid;
+    auth.email = data.email;
+    auth.displayName = data.display_name || data.email?.split('@')[0] || '';
+    localStorage.setItem('hermes_id_token', auth.idToken);
+    localStorage.setItem('hermes_refresh_token', auth.refreshToken);
+    localStorage.setItem('hermes_uid', auth.uid);
+    localStorage.setItem('hermes_email', auth.email);
+    localStorage.setItem('hermes_display_name', auth.displayName);
+  }
+
+  function clearAuth() {
+    auth.idToken = null;
+    auth.refreshToken = null;
+    auth.uid = null;
+    auth.email = null;
+    auth.displayName = null;
+    ['hermes_id_token','hermes_refresh_token','hermes_uid','hermes_email','hermes_display_name']
+      .forEach(k => localStorage.removeItem(k));
+  }
+
+  function authHeaders() {
+    return auth.idToken ? { 'Authorization': `Bearer ${auth.idToken}` } : {};
+  }
+
+  // Wrapper for fetch that auto-injects auth and handles 401 → refresh
+  async function authFetch(url, options = {}) {
+    options.headers = { ...options.headers, ...authHeaders() };
+    let res = await fetch(url, options);
+    if (res.status === 401 && auth.refreshToken) {
+      // Try refreshing the token
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        options.headers = { ...options.headers, ...authHeaders() };
+        res = await fetch(url, options);
+      } else {
+        handleLogout();
+        return res;
+      }
+    }
+    return res;
+  }
+
+  async function tryRefreshToken() {
+    try {
+      const res = await fetch('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: auth.refreshToken }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      auth.idToken = data.id_token;
+      auth.refreshToken = data.refresh_token;
+      localStorage.setItem('hermes_id_token', auth.idToken);
+      localStorage.setItem('hermes_refresh_token', auth.refreshToken);
+      return true;
+    } catch { return false; }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideAuthError() {
+    document.getElementById('auth-error').classList.remove('visible');
+  }
+
+  function switchAuthTab(tab) {
+    hideAuthError();
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    if (tab === 'login') {
+      document.querySelectorAll('.auth-tab')[0].classList.add('active');
+      document.getElementById('login-form').classList.remove('hidden');
+      document.getElementById('signup-form').classList.add('hidden');
+    } else {
+      document.querySelectorAll('.auth-tab')[1].classList.add('active');
+      document.getElementById('login-form').classList.add('hidden');
+      document.getElementById('signup-form').classList.remove('hidden');
+    }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    hideAuthError();
+    const btn = document.getElementById('login-btn');
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Login failed');
+      saveAuth(data);
+      enterApp();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    hideAuthError();
+    const btn = document.getElementById('signup-btn');
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const res = await fetch('/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, display_name: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Signup failed');
+      saveAuth(data);
+      enterApp();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  /* ── GOOGLE SIGN-IN ── */
+  // Uses a direct window.open() popup — same pattern as YouTube OAuth in this app.
+  // The GSI library (initTokenClient / initCodeClient popup) uses storagerelay://
+  // internally which Google blocks for Desktop-type OAuth clients.
+  // Desktop clients DO allow http://localhost redirect URIs, so we bypass the
+  // GSI library entirely and open the OAuth URL directly in a popup window.
+
+  function handleGoogleSignIn() {
+    hideAuthError();
+    const btn = document.getElementById('google-signin-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Connecting…'; }
+
+    // Open backend-initiated OAuth popup (backend builds the Google auth URL
+    // with redirect_uri pointing at http://localhost:<port>/auth/google/callback)
+    const popup = window.open(
+      '/auth/google/popup',
+      'google_signin',
+      'width=500,height=650,scrollbars=yes,resizable=yes'
+    );
+
+    if (!popup) {
+      if (btn) { btn.disabled = false; btn.innerHTML = googleBtnContent(); }
+      showAuthError('Popup was blocked. Please allow popups for this site.');
+      return;
+    }
+
+    // Listen for the postMessage from the callback page (same pattern as YouTube OAuth)
+    function onGoogleMsg(e) {
+      if (!e.data || typeof e.data.google_auth === 'undefined') return;
+      window.removeEventListener('message', onGoogleMsg);
+      if (btn) { btn.disabled = false; btn.innerHTML = googleBtnContent(); }
+      if (e.data.google_auth === 'success') {
+        saveAuth(e.data);
+        enterApp();
+      } else {
+        showAuthError(e.data.error || 'Google sign-in failed. Please try again.');
+      }
+    }
+    window.addEventListener('message', onGoogleMsg);
+
+    // Safety cleanup if the popup is closed without completing auth
+    const pollClose = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(pollClose);
+        window.removeEventListener('message', onGoogleMsg);
+        if (btn) { btn.disabled = false; btn.innerHTML = googleBtnContent(); }
+      }
+    }, 500);
+  }
+
+  function googleBtnContent() {
+    return '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google';
+  }
+
+  function toggleSidebar() {
+    const shell = document.getElementById('app-shell');
+    const collapsed = shell.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('sidebarCollapsed', collapsed);
+  }
+
+  function handleLogout() {
+    clearAuth();
+    document.getElementById('app-shell').style.display = 'none';
+    document.getElementById('auth-screen').classList.remove('hidden');
+    state.jobCache = [];
+    state.sessionId = null;
+  }
+
+  function enterApp() {
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-shell').style.display = 'grid';
+    // Restore sidebar collapsed state
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.getElementById('app-shell').classList.add('sidebar-collapsed');
+    }
+    // Show user info in sidebar
+    const pill = document.getElementById('user-pill');
+    pill.style.display = 'flex';
+    document.getElementById('user-email').textContent = auth.email || '';
+    document.getElementById('user-avatar').textContent = (auth.displayName || auth.email || '?')[0].toUpperCase();
+    // Show YouTube connect pill
+    document.getElementById('yt-pill').style.display = 'flex';
+    loadYouTubeStatus();
+    // Show Calendar connect pill
+    document.getElementById('cal-pill').style.display = 'flex';
+    loadCalendarStatus();
+    // Load data
+    loadHealth();
+    loadJobs();
+    // Pre-load creator profiles for the pipeline dropdown
+    loadCreatorProfiles();
+  }
+
+  /* ── YOUTUBE OAUTH ── */
+  let ytConnected = false;
+
+  async function loadYouTubeStatus() {
+    try {
+      const res = await authFetch('/auth/youtube/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      updateYouTubePill(data);
+    } catch (_) {}
+  }
+
+  function updateYouTubePill(data) {
+    const pill = document.getElementById('yt-pill');
+    const label = document.getElementById('yt-label');
+    const status = document.getElementById('yt-status');
+    ytConnected = data.connected;
+    if (data.connected) {
+      pill.classList.add('connected');
+      label.textContent = data.channel_title || 'YouTube Connected';
+      status.textContent = '● connected';
+    } else {
+      pill.classList.remove('connected');
+      label.textContent = 'Connect YouTube';
+      status.textContent = 'not linked';
+    }
+  }
+
+  async function handleYouTubeClick() {
+    if (ytConnected) {
+      // Already connected — offer to disconnect
+      if (!confirm('Disconnect your YouTube account?')) return;
+      try {
+        await authFetch('/auth/youtube/disconnect', { method: 'POST' });
+        updateYouTubePill({ connected: false });
+        toast('YouTube disconnected', 'info');
+      } catch (_) {}
+      return;
+    }
+    // Start OAuth flow
+    try {
+      const res = await authFetch('/auth/youtube');
+      if (!res.ok) {
+        const err = await res.json();
+        toast(err.detail || 'Failed to start YouTube connection', 'error');
+        return;
+      }
+      const data = await res.json();
+      // Open consent screen in popup
+      const popup = window.open(data.auth_url, 'youtube_oauth', 'width=600,height=700,scrollbars=yes');
+      // Listen for the callback message
+      window.addEventListener('message', function onMsg(e) {
+        if (e.data && typeof e.data.success !== 'undefined') {
+          window.removeEventListener('message', onMsg);
+          if (e.data.success) {
+            updateYouTubePill({ connected: true, channel_title: e.data.channel });
+            toast('YouTube connected!', 'success');
+          } else {
+            toast(e.data.error || 'YouTube connection failed', 'error');
+          }
+        }
+      });
+    } catch (err) {
+      toast('Failed to connect YouTube', 'error');
+    }
+  }
+
+  /* ── CALENDAR OAUTH ── */
+  let calConnected = false;
+
+  async function loadCalendarStatus() {
+    try {
+      const res = await authFetch('/auth/calendar/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      updateCalendarPill(data);
+    } catch (_) {}
+  }
+
+  function updateCalendarPill(data) {
+    const pill   = document.getElementById('cal-pill');
+    const label  = document.getElementById('cal-label');
+    const status = document.getElementById('cal-status');
+    calConnected = data.connected;
+    if (data.connected) {
+      pill.classList.add('connected');
+      label.textContent  = data.calendar_summary || 'Calendar Connected';
+      status.textContent = '● connected';
+    } else {
+      pill.classList.remove('connected');
+      label.textContent  = 'Connect Calendar';
+      status.textContent = 'not linked';
+    }
+  }
+
+  async function handleCalendarClick() {
+    if (calConnected) {
+      if (!confirm('Disconnect your Google Calendar?')) return;
+      try {
+        await authFetch('/auth/calendar/disconnect', { method: 'POST' });
+        updateCalendarPill({ connected: false });
+        toast('Calendar disconnected', 'info');
+      } catch (_) {}
+      return;
+    }
+    // Start OAuth flow
+    try {
+      const res = await authFetch('/auth/calendar');
+      if (!res.ok) {
+        const err = await res.json();
+        toast(err.detail || 'Failed to start Calendar connection', 'error');
+        return;
+      }
+      const data = await res.json();
+      const popup = window.open(data.auth_url, 'calendar_oauth', 'width=600,height=700,scrollbars=yes');
+      window.addEventListener('message', function onMsg(e) {
+        if (e.data && typeof e.data.success !== 'undefined' && typeof e.data.calendar_summary !== 'undefined') {
+          window.removeEventListener('message', onMsg);
+          if (e.data.success) {
+            updateCalendarPill({ connected: true, calendar_summary: e.data.calendar_summary });
+            toast('Calendar connected!', 'success');
+          } else {
+            toast(e.data.error || 'Calendar connection failed', 'error');
+          }
+        }
+      });
+    } catch (err) {
+      toast('Failed to connect Calendar', 'error');
+    }
+  }
+
   /* ── STATE ── */
   const state = {
     activeView: 'dashboard',
@@ -1289,6 +2483,8 @@
     'job-tracker': 'Job Tracker',
     'chat': 'Chat with Hermes',
     'library': 'Video Library',
+    'analytics': 'Analytics',
+    'creator-profiles': 'Creator Profiles',
   };
 
   function navigate(viewId) {
@@ -1305,7 +2501,33 @@
     state.activeView = viewId;
 
     // Refresh job list whenever tracker view becomes active
-    if (viewId === 'job-tracker') renderTrackerJobList();
+    if (viewId === 'job-tracker') {
+      loadJobs().then(() => renderTrackerJobList());
+    }
+    // Refresh creator dropdown when opening pipeline form
+    if (viewId === 'new-pipeline') {
+      loadCreatorProfiles();
+    }
+    // Refresh library whenever library view becomes active
+    if (viewId === 'library') {
+      loadLibrary();
+    }
+    // Refresh analytics whenever analytics view becomes active
+    if (viewId === 'analytics') {
+      loadAnalytics();
+    }
+    // Load creator profiles when that view becomes active
+    if (viewId === 'creator-profiles') {
+      loadCreatorProfiles();
+    }
+    // Show/hide chat topbar actions and reset to conversation screen
+    const chatActions = document.getElementById('chat-topbar-actions');
+    if (viewId === 'chat') {
+      chatActions.classList.add('visible');
+      showChatConversation(); // always start on the conversation screen
+    } else {
+      chatActions.classList.remove('visible');
+    }
   }
 
   document.querySelectorAll('.nav-item').forEach(item => {
@@ -1327,12 +2549,35 @@
   initChips('quick-niche-chips', 'quick');
   initChips('pipe-niche-chips', 'pipe');
 
+  /* ── LOAD NICHES ── */
+  async function loadNiches() {
+    try {
+      const res = await fetch('/niches');
+      if (!res.ok) return;
+      const data = await res.json();
+      const niches = data.niches || [];
+      ['quick-niche-select', 'pipe-niche-select'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const stateKey = id.startsWith('quick') ? 'quick' : 'pipe';
+        sel.innerHTML = niches.map(n => {
+          const label = n.charAt(0).toUpperCase() + n.slice(1);
+          return `<option value="${n}"${n === 'tech' ? ' selected' : ''}>${label}</option>`;
+        }).join('');
+        state.selectedNiche[stateKey] = sel.value;
+      });
+    } catch (_) {}
+  }
+  loadNiches();
+
   /* ── HEALTH CHECK ── */
   async function loadHealth() {
     try {
       const res = await fetch('/health');
       const data = await res.json();
-      document.getElementById('stat-model').textContent = data.model?.replace('gemini-', '') || '—';
+      const modelFull = data.model || '—';
+      document.getElementById('stat-model').textContent = modelFull.replace('gemini-', '').replace('openai/', '');
+      document.getElementById('stat-model-sub').textContent = data.llm_provider === 'openai_compatible' ? 'openai-compatible' : 'gemini';
       document.getElementById('stat-status').textContent = data.status === 'ok' ? '✓ Live' : '✗ Down';
       document.getElementById('stat-mode').textContent = data.demo_mode ? 'demo mode' : 'production';
       document.getElementById('mode-label').textContent = data.demo_mode ? 'Demo Mode' : 'Production';
@@ -1343,8 +2588,32 @@
 
   /* ── JOBS ── */
   async function loadJobs() {
-    // Jobs are fetched individually; for demo we show from cache
     const container = document.getElementById('jobs-container');
+    try {
+      const res = await authFetch('/jobs');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.jobs && data.jobs.length > 0) {
+          // Merge API jobs into cache (avoid duplicates)
+          data.jobs.forEach(j => {
+            const existing = state.jobCache.findIndex(c => c.job_id === j.job_id);
+            if (existing === -1) state.jobCache.push(j);
+            else state.jobCache[existing] = { ...state.jobCache[existing], ...j };
+          });
+          // Sort newest first
+          state.jobCache.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+          // Reconnect SSE for any running jobs (e.g. after page reload)
+          state.jobCache.forEach(j => {
+            if (j.status === 'running' && !_sseConnections[j.job_id] && !_pollTimers[j.job_id]) {
+              if (j.current_stage) _jobStages[j.job_id] = STAGE_TO_IDX[j.current_stage] ?? 0;
+              startPolling(j.job_id);
+            }
+          });
+        }
+      }
+    } catch (_) {}
+
     if (state.jobCache.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -1384,7 +2653,274 @@
       </table>`;
   }
 
-  function badgeHtml(status) {
+  /* ── LIBRARY ── */
+  async function loadLibrary() {
+    const grid = document.getElementById('library-grid');
+    if (!grid) return;
+    grid.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:80px;grid-column:1/-1;"><div class="spinner"></div></div>`;
+    // Ensure jobs are loaded
+    if (state.jobCache.length === 0) await loadJobs();
+
+    const completed = state.jobCache.filter(j => j.status === 'completed');
+    if (completed.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <div class="empty-icon">▣</div>
+          <div class="empty-title">No videos yet</div>
+          <div class="empty-desc">Completed pipeline jobs will appear here after production.</div>
+          <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create First Video</button>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = completed.map(j => {
+      const title = escHtml((j.topic || j.request?.request || 'Untitled').slice(0, 60));
+      const ytUrl = j.youtube_url || j.data?.youtube_url || '';
+      const niche = escHtml(j.request?.niche || 'general');
+      const jobId = j.job_id;
+      return `
+        <div class="video-card" id="vcard-${jobId}">
+          <div class="video-thumb" id="vthumb-${jobId}">
+            <div class="video-thumb-gradient"></div>
+            <div class="video-thumb-icon">🎬</div>
+          </div>
+          <div class="video-info">
+            <div class="video-title">${title}</div>
+            <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-top:4px;">${niche} · ${formatTime(j.created_at)}</div>
+            <div class="video-meta">
+              <span class="badge badge-done">✓ done</span>
+              <div class="video-actions">
+                <button class="icon-btn" title="Download video" onclick="downloadVideoFromLibrary('${jobId}', this)">⬇</button>
+                <button class="icon-btn" title="Download thumbnail" onclick="downloadThumbnail('${jobId}', this)">🖼</button>
+                ${ytUrl ? `<a class="icon-btn" href="${escHtml(ytUrl)}" target="_blank" title="View on YouTube">▶</a>` : ''}
+                <button class="icon-btn" title="View in tracker" onclick="openTracker('${jobId}')">◎</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Load thumbnails asynchronously for each card
+    completed.forEach(j => loadCardThumbnail(j.job_id));
+  }
+
+  async function loadCardThumbnail(jobId) {
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/thumbnail`);
+      if (!res.ok) return; // no thumbnail yet — keep the emoji placeholder
+      const data = await res.json();
+      if (!data.url) return;
+      const thumbEl = document.getElementById(`vthumb-${jobId}`);
+      if (!thumbEl) return;
+      const img = document.createElement('img');
+      img.className = 'loading';
+      img.alt = 'Thumbnail';
+      img.onload = () => { img.classList.remove('loading'); img.classList.add('loaded'); };
+      img.onerror = () => img.remove(); // silently remove on error
+      img.src = data.url;
+      thumbEl.appendChild(img);
+    } catch (_) {}
+  }
+
+  async function downloadVideoFromLibrary(jobId, btn) {
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳';
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/download`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Download failed');
+      window.open(data.download_url, '_blank');
+      toast('Download link opened — valid for 60 minutes', 'success');
+    } catch (err) {
+      toast('Download failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+
+  async function downloadThumbnail(jobId, btn) {
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳';
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/download-thumbnail`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Download failed');
+      window.open(data.download_url, '_blank');
+      toast('Thumbnail download link opened — valid for 60 minutes', 'success');
+    } catch (err) {
+      toast('Thumbnail not available: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+
+  /* ── ANALYTICS ── */
+  async function loadAnalytics() {
+    const grid = document.getElementById('analytics-grid');
+    if (!grid) return;
+    grid.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:80px;grid-column:1/-1;"><div class="spinner"></div></div>`;
+
+    try {
+      const res = await authFetch('/analytics');
+      if (!res.ok) throw new Error('Failed to load analytics');
+      const data = await res.json();
+      const items = data.analytics || [];
+
+      if (items.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">No analytics yet</div>
+            <div class="empty-desc">Analytics appear here after videos are published and the analytics agent runs (typically 48h post-publish).</div>
+            <button class="btn btn-gold" onclick="navigate('new-pipeline')">✦ Create a Video</button>
+          </div>`;
+        document.getElementById('a-stat-views').textContent = '0';
+        document.getElementById('a-stat-avgview').textContent = '—';
+        document.getElementById('a-stat-likes').textContent = '0';
+        document.getElementById('a-stat-tracked').textContent = '0';
+        return;
+      }
+
+      // Compute summary stats from items that have analytics
+      const withData = items.filter(i => i.has_analytics);
+      const totalViews = withData.reduce((s, i) => s + (i.views || 0), 0);
+      const totalLikes = withData.reduce((s, i) => s + (i.likes || 0), 0);
+      const avgViewPct = withData.length > 0
+        ? (withData.reduce((s, i) => s + (i.avg_view_percentage || 0), 0) / withData.length)
+        : 0;
+
+      document.getElementById('a-stat-views').textContent = totalViews.toLocaleString();
+      document.getElementById('a-stat-avgview').textContent = avgViewPct > 0 ? avgViewPct.toFixed(1) + '%' : '—';
+      document.getElementById('a-stat-likes').textContent = totalLikes.toLocaleString();
+      document.getElementById('a-stat-tracked').textContent = withData.length.toString();
+
+      grid.innerHTML = items.map(item => {
+        const title = escHtml((item.topic_title || 'Untitled').slice(0, 80));
+        const niche = escHtml(item.niche || '');
+        const ytUrl = item.youtube_url || '';
+        const videoId = item.video_id || '';
+
+        if (!item.has_analytics) {
+          return `
+            <div class="analytics-card">
+              <div class="analytics-card-header">
+                <div class="analytics-card-title">${title}</div>
+                <div class="analytics-card-meta">
+                  ${niche ? `<span>${niche}</span>` : ''}
+                  <span>${formatTime(item.created_at)}</span>
+                </div>
+              </div>
+              <div class="analytics-no-data">
+                No analytics data yet — run analytics to fetch metrics
+              </div>
+              <div class="analytics-card-footer">
+                ${ytUrl ? `<a class="icon-btn" href="${escHtml(ytUrl)}" target="_blank" title="View on YouTube">▶</a>` : '<span></span>'}
+                <button class="btn btn-outline" style="padding:4px 12px;font-size:11px;" onclick="triggerAnalytics('${videoId}', '${escHtml(item.youtube_video_id || '')}', '${escHtml(niche || 'tech')}', this)">📊 Fetch Analytics</button>
+              </div>
+            </div>`;
+        }
+
+        const views = (item.views || 0).toLocaleString();
+        const watchMin = (item.watch_time_minutes || 0).toFixed(0);
+        const avgView = (item.avg_view_percentage || 0).toFixed(1);
+        const likes = (item.likes || 0).toLocaleString();
+        const comments = (item.comments || 0).toLocaleString();
+        const ctr = (item.ctr || 0).toFixed(1);
+
+        // Grade
+        const vp = item.avg_view_percentage || 0;
+        const v = item.views || 0;
+        let grade = 'C', gradeClass = 'grade-c';
+        if (vp >= 60 && v >= 5000) { grade = 'A'; gradeClass = 'grade-a'; }
+        else if (vp >= 45 || v >= 1000) { grade = 'B'; gradeClass = 'grade-b'; }
+
+        return `
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                <div style="flex:1;min-width:0;">
+                  <div class="analytics-card-title">${title}</div>
+                  <div class="analytics-card-meta">
+                    ${niche ? `<span>${niche}</span>` : ''}
+                    <span>${formatTime(item.created_at)}</span>
+                  </div>
+                </div>
+                <div class="analytics-grade ${gradeClass}">${grade}</div>
+              </div>
+            </div>
+            <div class="analytics-card-body">
+              <div class="analytics-metrics">
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">Views</span>
+                  <span class="analytics-metric-value">${views}</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">Avg View %</span>
+                  <span class="analytics-metric-value">${avgView}%</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">Watch Time</span>
+                  <span class="analytics-metric-value">${watchMin}m</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">Likes</span>
+                  <span class="analytics-metric-value">${likes}</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">Comments</span>
+                  <span class="analytics-metric-value">${comments}</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric-label">CTR</span>
+                  <span class="analytics-metric-value">${ctr}%</span>
+                </div>
+              </div>
+            </div>
+            <div class="analytics-card-footer">
+              ${ytUrl ? `<a class="icon-btn" href="${escHtml(ytUrl)}" target="_blank" title="View on YouTube">▶</a>` : '<span></span>'}
+              <button class="btn btn-outline" style="padding:4px 12px;font-size:11px;" onclick="triggerAnalytics('${videoId}', '${escHtml(item.youtube_video_id || '')}', '${escHtml(niche || 'tech')}', this)">↺ Refresh</button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <div class="empty-icon">⚠</div>
+          <div class="empty-title">Failed to load analytics</div>
+          <div class="empty-desc">${escHtml(err.message)}</div>
+          <button class="btn btn-outline" onclick="loadAnalytics()">↺ Retry</button>
+        </div>`;
+    }
+  }
+
+  async function triggerAnalytics(videoId, ytVideoId, niche, btn) {
+    if (!videoId || !ytVideoId) {
+      toast('Missing video ID — cannot fetch analytics', 'error');
+      return;
+    }
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:1.5px;"></div>';
+    try {
+      const res = await authFetch(`/pipeline/${videoId}/analytics?youtube_video_id=${encodeURIComponent(ytVideoId)}&niche=${encodeURIComponent(niche)}`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Analytics fetch failed');
+      toast('Analytics updated — refreshing…', 'success');
+      setTimeout(() => loadAnalytics(), 1500);
+    } catch (err) {
+      toast('Analytics failed: ' + err.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+
+    function badgeHtml(status) {
     const map = {
       completed: '<span class="badge badge-done">✓ done</span>',
       running:   '<span class="badge badge-running">running</span>',
@@ -1403,7 +2939,7 @@
     setLoading(btn, true, 'Running…');
 
     try {
-      const res = await fetch('/pipeline', {
+      const res = await authFetch('/pipeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1428,7 +2964,7 @@
         status: 'running',
         current_stage: 'ideas',
         request: { request },
-        topic: request.slice(0, 60),
+        topic: request,
         created_at: new Date().toISOString(),
       });
 
@@ -1436,7 +2972,7 @@
       navigate('job-tracker');
       renderTrackerJobList();
       selectJob(jobId);
-      startStepAnimation(jobId);
+      setJobStage(jobId, 'ideas');
       startPolling(jobId);
     } catch (e) {
       toast(e.message, 'error');
@@ -1454,7 +2990,7 @@
     setLoading(btn, true, 'Running pipeline…');
 
     try {
-      const res = await fetch('/pipeline', {
+      const res = await authFetch('/pipeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1478,14 +3014,14 @@
         status: 'running',
         current_stage: 'ideas',
         request: { request },
-        topic: request.slice(0, 60),
+        topic: request,
         created_at: new Date().toISOString(),
       });
 
       navigate('job-tracker');
       renderTrackerJobList();
       selectJob(jobId);
-      startStepAnimation(jobId);
+      setJobStage(jobId, 'ideas');
       startPolling(jobId);
     } catch (e) {
       toast(e.message, 'error');
@@ -1494,79 +3030,123 @@
     }
   }
 
-  /* ── STEP ANIMATION ── */
-  const _stepTimers = {};   // jobId → { timeouts: [], stepIdx: number }
-  const STEP_DURATIONS = [8000, 15000, 12000, 20000, 8000]; // ms per step 0-4; step 5 holds
+  /* ── REAL STAGE TRACKING (SSE-driven) ── */
+  const STAGE_TO_IDX = {
+    ideas: 0,
+    research: 1,
+    script: 2,
+    production: 3,
+    scheduling: 4,
+    analytics: 5,
+    done: 6,
+  };
+  const _jobStages = {};  // jobId → current step index (from real SSE/polling data)
 
-  function startStepAnimation(jobId) {
-    if (_stepTimers[jobId]) return;
-    const entry = { timeouts: [], stepIdx: 0 };
-    _stepTimers[jobId] = entry;
-
-    function advance(idx) {
-      entry.stepIdx = idx;
-      const job = state.jobCache.find(j => j.job_id === jobId);
-      if (job && state.selectedJobId === jobId) renderDetailRunning(job, idx);
-      // Schedule next step (stop auto-advance at step 5 — Analytics Loop)
-      if (idx < STEP_DURATIONS.length) {
-        const t = setTimeout(() => advance(idx + 1), STEP_DURATIONS[idx]);
-        entry.timeouts.push(t);
-      }
-      // idx === 5: stays here until polling fires completion
+  function setJobStage(jobId, stageName) {
+    const idx = STAGE_TO_IDX[stageName] ?? 0;
+    _jobStages[jobId] = idx;
+    const job = state.jobCache.find(j => j.job_id === jobId);
+    if (job && state.selectedJobId === jobId && job.status === 'running') {
+      renderDetailRunning(job, idx);
     }
-
-    advance(0);
   }
 
-  function stopStepAnimation(jobId) {
-    const entry = _stepTimers[jobId];
-    if (!entry) return;
-    entry.timeouts.forEach(t => clearTimeout(t));
-    delete _stepTimers[jobId];
+  function getJobStageIdx(jobId) {
+    return _jobStages[jobId] ?? 0;
   }
 
-  function getAnimatedStepIdx(jobId) {
-    return _stepTimers[jobId]?.stepIdx ?? 0;
+  function cleanupJobStage(jobId) {
+    delete _jobStages[jobId];
   }
 
-  /* ── POLLING ── */
-  const _pollTimers = {};
+  /* ── POLLING → SSE ── */
+  const _sseConnections = {};   // jobId → EventSource
+  const _pollTimers = {};       // fallback polling (kept for reconnect)
 
   function startPolling(jobId) {
-    if (_pollTimers[jobId]) return; // already polling
+    // Prefer SSE; fall back to polling if EventSource not supported
+    if (typeof EventSource !== 'undefined') {
+      startSSE(jobId);
+    } else {
+      startLegacyPolling(jobId);
+    }
+  }
+
+  function startSSE(jobId) {
+    if (_sseConnections[jobId]) return;
+    const es = new EventSource(`/pipeline/${jobId}/stream?token=${encodeURIComponent(auth.idToken || '')}`);
+    _sseConnections[jobId] = es;
+
+    es.addEventListener('stage_update', (e) => {
+      const d = JSON.parse(e.data);
+      const idx = state.jobCache.findIndex(j => j.job_id === jobId);
+      if (idx !== -1) state.jobCache[idx].current_stage = d.stage;
+      setJobStage(jobId, d.stage);
+      renderTrackerJobList();
+    });
+
+    es.addEventListener('complete', (e) => {
+      es.close();
+      delete _sseConnections[jobId];
+      cleanupJobStage(jobId);
+      const idx = state.jobCache.findIndex(j => j.job_id === jobId);
+      if (idx !== -1) state.jobCache[idx].status = 'completed';
+      renderTrackerJobList();
+      toast(`✓ Pipeline complete — Job ${jobId.slice(0,8)}`, 'success');
+      loadJobs();
+      if (state.selectedJobId === jobId) fetchAndRenderDetail(jobId);
+    });
+
+    es.addEventListener('error', (e) => {
+      try {
+        const d = JSON.parse(e.data);
+        const idx = state.jobCache.findIndex(j => j.job_id === jobId);
+        if (idx !== -1) { state.jobCache[idx].status = 'failed'; state.jobCache[idx].error = d.error; }
+        renderTrackerJobList();
+        cleanupJobStage(jobId);
+        if (state.selectedJobId === jobId) fetchAndRenderDetail(jobId);
+      } catch (_) {}
+      es.close();
+      delete _sseConnections[jobId];
+    });
+
+    // If SSE connection itself errors (network), fall back to polling
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        delete _sseConnections[jobId];
+        // Only fall back if job still running
+        const job = state.jobCache.find(j => j.job_id === jobId);
+        if (job && job.status === 'running') startLegacyPolling(jobId);
+      }
+    };
+  }
+
+  function startLegacyPolling(jobId) {
+    if (_pollTimers[jobId]) return;
     _pollTimers[jobId] = setInterval(async () => {
       try {
-        const res = await fetch(`/pipeline/${jobId}`);
+        const res = await authFetch(`/pipeline/${jobId}`);
         if (!res.ok) return;
         const data = await res.json();
         const status = data.status;
-
-        // Update cache
         const idx = state.jobCache.findIndex(j => j.job_id === jobId);
         if (idx !== -1) {
           state.jobCache[idx].status = status;
+          if (data.data?.current_stage) {
+            state.jobCache[idx].current_stage = data.data.current_stage;
+            setJobStage(jobId, data.data.current_stage);
+          }
           if (data.data?.response) state.jobCache[idx].response = data.data.response;
         }
-
         renderTrackerJobList();
-
-        // Stop polling when done
         if (status === 'completed' || status === 'failed') {
           clearInterval(_pollTimers[jobId]);
           delete _pollTimers[jobId];
-          stopStepAnimation(jobId);
-
-          if (status === 'completed') {
-            toast(`✓ Pipeline complete — Job ${jobId.slice(0,8)}`, 'success');
-            loadJobs();
-          }
-
-          // Re-render final state if selected
-          if (state.selectedJobId === jobId) {
-            renderDetailFromApiData(data);
-          }
+          cleanupJobStage(jobId);
+          if (status === 'completed') { toast(`✓ Pipeline complete — Job ${jobId.slice(0,8)}`, 'success'); loadJobs(); }
+          if (state.selectedJobId === jobId) renderDetailFromApiData(data);
         }
-      } catch (_) { /* ignore transient errors */ }
+      } catch (_) {}
     }, 3000);
   }
 
@@ -1604,8 +3184,11 @@
     const job = state.jobCache.find(j => j.job_id === jobId);
     if (!job) return;
     if (job.status === 'running') {
-      // Show current animated step (or step 0 if animation not started yet)
-      renderDetailRunning(job, getAnimatedStepIdx(jobId));
+      // Show current real stage (from SSE/polling, or seed from job data)
+      if (_jobStages[jobId] === undefined && job.current_stage) {
+        _jobStages[jobId] = STAGE_TO_IDX[job.current_stage] ?? 0;
+      }
+      renderDetailRunning(job, getJobStageIdx(jobId));
     } else {
       fetchAndRenderDetail(jobId);
     }
@@ -1615,7 +3198,7 @@
     const detail = document.getElementById('tracker-detail');
     detail.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:200px;"><div class="spinner"></div></div>`;
     try {
-      const res = await fetch(`/pipeline/${jobId}`);
+      const res = await authFetch(`/pipeline/${jobId}`);
       if (!res.ok) throw new Error('Job not found');
       const data = await res.json();
       const idx = state.jobCache.findIndex(j => j.job_id === jobId);
@@ -1660,10 +3243,11 @@
       <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
         <span class="badge badge-running">running</span>
         <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${stepsConfig[activeIdx]?.name || 'Starting…'}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--green);margin-left:auto;"><span class="sse-dot"></span>live</span>
       </div>
       <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
         <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:6px;">REQUEST</div>
-        <div style="font-size:14px;color:var(--text);font-weight:500;">${escHtml(job.topic || job.request?.request || '')}</div>
+        <div style="font-size:14px;color:var(--text);font-weight:500;">${escHtml(job.request?.request || job.topic || '')}</div>
       </div>
       <div class="pipeline-progress">${steps}</div>`;
   }
@@ -1697,28 +3281,290 @@
       ? response.slice(0, 800) + (response.length > 800 ? '\n\n…' : '')
       : '';
 
+    const jobId = data.job_id;
+
     document.getElementById('tracker-detail').innerHTML = `
       <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         ${badgeHtml(status)}
-        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">Job ${data.job_id.slice(0,12)}…</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">Job ${jobId.slice(0,12)}…</span>
         <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${formatTime(job.created_at)}</span>
       </div>
       <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
         <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:6px;">REQUEST</div>
         <div style="font-size:14px;color:var(--text);font-weight:500;">${escHtml(request)}</div>
       </div>
-      <div class="tracker-layout">
-        <div class="pipeline-progress">${steps}</div>
+
+      <div class="detail-tabs">
+        <div class="detail-tab active" onclick="switchDetailTab(this,'tab-pipeline')">Pipeline</div>
+        <div class="detail-tab" onclick="switchDetailTab(this,'tab-script')">Script</div>
+        <div class="detail-tab" onclick="switchDetailTab(this,'tab-twitter')" id="tab-twitter-btn">𝕏 Twitter</div>
+      </div>
+
+      <div id="tab-pipeline" class="detail-tab-panel active">
+        <div class="tracker-layout">
+          <div class="pipeline-progress">${steps}</div>
+          ${allDone ? `
+          <div class="script-panel">
+            <div style="font-family:var(--font-disp);font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);">Coordinator Output</div>
+            <div id="coordinator-output-box" class="coordinator-output-box">${renderMarkdown(response)}</div>
+            <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;"
+              onclick="navigator.clipboard.writeText(${JSON.stringify(response)});toast('Copied!','success')">
+              Copy Output
+            </button>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" id="btn-download-video"
+              onclick="downloadVideo('${jobId}')">
+              ⬇ Download Video
+            </button>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <div id="tab-script" class="detail-tab-panel">
         ${allDone ? `
-        <div class="script-panel">
-          <div style="font-family:var(--font-disp);font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);">Coordinator Output</div>
-          <textarea class="script-textarea" readonly>${escHtml(scriptPreview)}</textarea>
-          <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;"
-            onclick="navigator.clipboard.writeText(document.querySelector('.script-textarea').value);toast('Copied!','success')">
-            Copy Output
-          </button>
-        </div>` : ''}
+        <div id="script-content-area">
+          <div style="display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:12px;"><div class="spinner" style="width:14px;height:14px;"></div> Loading script…</div>
+        </div>` : `
+        <div class="empty-state" style="padding:40px 0;">
+          <div class="empty-icon" style="font-size:32px;">📝</div>
+          <div class="empty-title" style="font-size:14px;">Script not ready yet</div>
+          <div class="empty-desc" style="font-size:12px;">The script will appear here once the pipeline completes.</div>
+        </div>`}
+      </div>
+
+      <div id="tab-twitter" class="detail-tab-panel">
+        <div id="twitter-content-area">
+          ${allDone ? `<div style="display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:12px;"><div class="spinner" style="width:14px;height:14px;"></div> Loading Twitter content…</div>` : `
+          <div class="empty-state" style="padding:40px 0;">
+            <div class="empty-icon" style="font-size:32px;">𝕏</div>
+            <div class="empty-title" style="font-size:14px;">Twitter content not ready</div>
+            <div class="empty-desc" style="font-size:12px;">Generated alongside the script once the pipeline completes.</div>
+          </div>`}
+        </div>
       </div>`;
+
+    // Auto-load Twitter content if job is done
+    if (allDone) loadTwitterContent(jobId);
+    if (allDone) loadScriptContent(jobId);
+  }
+
+  function switchDetailTab(tabEl, panelId) {
+    const detail = document.getElementById('tracker-detail');
+    detail.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+    detail.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+    tabEl.classList.add('active');
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('active');
+  }
+
+  async function downloadVideo(jobId) {
+    const btn = document.getElementById('btn-download-video');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating link…'; }
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/download`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Download failed');
+      window.open(data.download_url, '_blank');
+      toast('Download link opened — valid for 60 minutes', 'success');
+    } catch (err) {
+      toast('Download failed: ' + err.message, 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ Download Video'; }
+    }
+  }
+
+  // ── Markdown → HTML renderer (no external deps) ──────────────────────────
+  function renderMarkdown(md) {
+    if (!md) return '';
+    let html = escHtml(md);
+
+    // Headings
+    html = html.replace(/^### (.+)$/gm, '<h3 style="font-family:var(--font-disp);font-size:13px;font-weight:700;color:var(--text);margin:14px 0 6px;">$1</h3>');
+    html = html.replace(/^## (.+)$/gm,  '<h2 style="font-family:var(--font-disp);font-size:14px;font-weight:700;color:var(--gold-b);margin:16px 0 8px;">$1</h2>');
+    html = html.replace(/^# (.+)$/gm,   '<h1 style="font-family:var(--font-disp);font-size:16px;font-weight:800;color:var(--text);margin:18px 0 10px;">$1</h1>');
+
+    // Bold and italic
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text);font-weight:600;">$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code style="font-family:var(--font-mono);font-size:11px;background:var(--bg);padding:1px 5px;border-radius:4px;color:var(--violet);">$1</code>');
+
+    // Horizontal rule
+    html = html.replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">');
+
+    // Unordered lists — collect consecutive bullet lines
+    html = html.replace(/((?:^[ \t]*[-*+] .+\n?)+)/gm, (block) => {
+      const items = block.trim().split('\n').map(line =>
+        `<li style="margin:3px 0;">${line.replace(/^[ \t]*[-*+] /, '')}</li>`
+      ).join('');
+      return `<ul style="padding-left:18px;margin:8px 0;list-style:disc;">${items}</ul>`;
+    });
+
+    // Ordered lists
+    html = html.replace(/((?:^[ \t]*\d+\. .+\n?)+)/gm, (block) => {
+      const items = block.trim().split('\n').map(line =>
+        `<li style="margin:3px 0;">${line.replace(/^[ \t]*\d+\. /, '')}</li>`
+      ).join('');
+      return `<ol style="padding-left:18px;margin:8px 0;">${items}</ol>`;
+    });
+
+    // Paragraphs — wrap non-tag lines
+    html = html.replace(/^(?!<[a-z]|$)(.+)$/gm, '<p style="margin:6px 0;line-height:1.6;">$1</p>');
+
+    // Clean up extra blank lines
+    html = html.replace(/\n{3,}/g, '\n\n');
+
+    return html;
+  }
+
+  async function loadScriptContent(jobId) {
+    const area = document.getElementById('script-content-area');
+    if (!area) return;
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/script`);
+      if (!res.ok) {
+        area.innerHTML = `<div class="empty-state" style="padding:40px 0;">
+          <div class="empty-icon" style="font-size:32px;">📝</div>
+          <div class="empty-title" style="font-size:14px;">No script found</div>
+          <div class="empty-desc" style="font-size:12px;">The script agent may not have saved a script for this job.</div>
+        </div>`;
+        return;
+      }
+      const data = await res.json();
+      const scriptText = data.script_text || '';
+      const hook = data.hook || '';
+      const cta = data.cta || '';
+      const title = data.youtube_title || '';
+      const desc = data.youtube_description || '';
+      const tags = data.youtube_tags || [];
+      const words = data.word_count || 0;
+      const duration = data.estimated_duration_s || 0;
+      const topic = data.topic_title || '';
+
+      const tagsHtml = tags.map(t => `<span class="hashtag-chip" style="background:rgba(62,207,142,0.08);border-color:rgba(62,207,142,0.2);color:var(--green);">${escHtml(t)}</span>`).join('');
+
+      area.innerHTML = `
+        <div class="script-panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <span style="font-family:var(--font-disp);font-size:14px;font-weight:700;color:var(--text);">Generated Script</span>
+            <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;"
+              onclick="navigator.clipboard.writeText(${JSON.stringify(scriptText)});toast('Script copied!','success')">
+              Copy Script
+            </button>
+          </div>
+
+          ${topic ? `<div style="font-size:12px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:12px;">TOPIC: <span style="color:var(--gold-b);">${escHtml(topic)}</span></div>` : ''}
+
+          ${words ? `<div style="display:flex;gap:16px;margin-bottom:16px;">
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">📝 ${words} words</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">⏱ ~${duration}s</span>
+          </div>` : ''}
+
+          ${hook ? `<div style="background:var(--gold-dim);border:1px solid rgba(200,135,58,0.25);border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--gold-b);margin-bottom:4px;">HOOK (first 3s)</div>
+            <div style="font-size:13px;color:var(--text);font-weight:500;">${escHtml(hook)}</div>
+          </div>` : ''}
+
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:10px;">FULL SCRIPT</div>
+            <div style="font-size:13.5px;color:var(--text);line-height:1.8;white-space:pre-wrap;font-family:var(--font-body);">${escHtml(scriptText)}</div>
+          </div>
+
+          ${cta ? `<div style="background:rgba(75,139,244,0.08);border:1px solid rgba(75,139,244,0.2);border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--blue);margin-bottom:4px;">CALL TO ACTION</div>
+            <div style="font-size:13px;color:var(--text);">${escHtml(cta)}</div>
+          </div>` : ''}
+
+          ${title ? `<div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:6px;">YOUTUBE TITLE</div>
+            <div style="font-size:13px;color:var(--text);font-weight:600;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;">${escHtml(title)}</div>
+          </div>` : ''}
+
+          ${desc ? `<div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:6px;">DESCRIPTION</div>
+            <div style="font-size:12px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;white-space:pre-wrap;line-height:1.6;">${escHtml(desc)}</div>
+          </div>` : ''}
+
+          ${tags.length ? `<div>
+            <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:8px;">TAGS</div>
+            <div class="hashtag-row">${tagsHtml}</div>
+          </div>` : ''}
+        </div>`;
+    } catch (err) {
+      area.innerHTML = `<div class="empty-state" style="padding:40px 0;">
+        <div class="empty-icon" style="font-size:32px;">⚠️</div>
+        <div class="empty-title" style="font-size:14px;">Failed to load script</div>
+        <div class="empty-desc" style="font-size:12px;">${escHtml(err.message)}</div>
+      </div>`;
+    }
+  }
+
+  async function loadTwitterContent(jobId) {
+    const area = document.getElementById('twitter-content-area');
+    if (!area) return;
+    try {
+      const res = await authFetch(`/pipeline/${jobId}/twitter`);
+      if (!res.ok) {
+        area.innerHTML = `<div class="empty-state" style="padding:40px 0;">
+          <div class="empty-icon" style="font-size:32px;">𝕏</div>
+          <div class="empty-title" style="font-size:14px;">No Twitter content found</div>
+          <div class="empty-desc" style="font-size:12px;">The script agent may not have generated Twitter content for this job.</div>
+        </div>`;
+        return;
+      }
+      const data = await res.json();
+      const tc = data.twitter_content;
+      const tweets = tc.thread_tweets || [];
+      const longPost = tc.long_post || '';
+      const hashtags = tc.hashtags || [];
+
+      const tweetCards = tweets.map((t, i) => {
+        const len = t.length;
+        const charCls = len > 280 ? 'over' : len > 240 ? 'warn' : '';
+        return `
+          <div class="tweet-card">
+            <div class="tweet-num">Tweet ${i + 1} of ${tweets.length}</div>
+            <div class="tweet-text">${escHtml(t)}</div>
+            <div class="tweet-footer">
+              <span class="tweet-chars ${charCls}">${len}/280</span>
+              <button class="btn btn-outline" style="padding:3px 10px;font-size:11px;"
+                onclick="navigator.clipboard.writeText(${JSON.stringify(t)});toast('Tweet copied!','success')">Copy</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const hashtagHtml = hashtags.map(h => `<span class="hashtag-chip">#${escHtml(h)}</span>`).join('');
+
+      area.innerHTML = `
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-family:var(--font-disp);font-size:14px;font-weight:700;color:var(--text);">Thread (${tweets.length} tweets)</span>
+            <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;"
+              onclick="navigator.clipboard.writeText(${JSON.stringify(tweets.join('\n\n'))});toast('Thread copied!','success')">
+              Copy All
+            </button>
+          </div>
+          <div class="twitter-thread">${tweetCards}</div>
+        </div>
+        ${longPost ? `
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-family:var(--font-disp);font-size:14px;font-weight:700;color:var(--text);">Long Post</span>
+            <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;"
+              onclick="navigator.clipboard.writeText(${JSON.stringify(longPost)});toast('Long post copied!','success')">Copy</button>
+          </div>
+          <div class="long-post-box">${escHtml(longPost)}</div>
+        </div>` : ''}
+        ${hashtags.length ? `
+        <div>
+          <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-bottom:8px;">HASHTAGS</div>
+          <div class="hashtag-row">${hashtagHtml}</div>
+        </div>` : ''}`;
+    } catch (e) {
+      area.innerHTML = `<div style="color:var(--red);font-size:12px;">Failed to load Twitter content: ${escHtml(e.message)}</div>`;
+    }
   }
 
   function refreshTrackerList() {
@@ -1726,7 +3572,7 @@
     if (state.selectedJobId && !state.selectedJobId.startsWith('pending-')) {
       const job = state.jobCache.find(j => j.job_id === state.selectedJobId);
       if (job?.status === 'running') {
-        renderDetailRunning(job, getAnimatedStepIdx(state.selectedJobId));
+        renderDetailRunning(job, getJobStageIdx(state.selectedJobId));
       } else {
         fetchAndRenderDetail(state.selectedJobId);
       }
@@ -1740,6 +3586,121 @@
   }
 
   /* ── CHAT ── */
+  let _chatSessions = [];
+  let _activeSessionId = null;
+
+  // Toggle between the history grid and the conversation panel
+  function showChatHistory() {
+    document.getElementById('chat-history-screen').classList.add('visible');
+    document.getElementById('chat-messages').style.display = 'none';
+    document.getElementById('chat-input-area').style.display = 'none';
+    // Update history button label
+    document.getElementById('chat-history-btn').textContent = '← Back to Chat';
+    document.getElementById('chat-history-btn').onclick = showChatConversation;
+    loadChatSessions();
+  }
+
+  function showChatConversation() {
+    document.getElementById('chat-history-screen').classList.remove('visible');
+    document.getElementById('chat-messages').style.display = 'flex';
+    document.getElementById('chat-input-area').style.display = 'block';
+    // Restore history button
+    document.getElementById('chat-history-btn').textContent = '🕐 History';
+    document.getElementById('chat-history-btn').onclick = showChatHistory;
+  }
+
+  async function loadChatSessions() {
+    try {
+      const res = await authFetch('/chat/sessions');
+      if (!res.ok) return;
+      const data = await res.json();
+      _chatSessions = data.sessions || [];
+      renderChatSessionList();
+    } catch (_) {}
+  }
+
+  function renderChatSessionList() {
+    const grid  = document.getElementById('chat-history-grid');
+    const empty = document.getElementById('chat-history-empty');
+
+    // Remove old cards (keep the empty state)
+    grid.querySelectorAll('.chat-history-card').forEach(el => el.remove());
+
+    if (!_chatSessions.length) {
+      empty.style.display = 'flex';
+      return;
+    }
+    empty.style.display = 'none';
+
+    _chatSessions.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'chat-history-card';
+      const ago = _timeAgo(s.last_message_at);
+      card.innerHTML = `
+        <div class="chat-history-card-title">${escHtml(s.title || 'Chat')}</div>
+        <div class="chat-history-card-meta">
+          <span>🕐 ${ago}</span>
+          <span>💬 ${s.message_count || 0} messages</span>
+        </div>`;
+      card.addEventListener('click', () => {
+        showChatConversation();
+        loadChatHistory(s.session_id, s.title);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function _timeAgo(isoStr) {
+    if (!isoStr) return '';
+    const diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
+    if (diff < 60)   return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  async function loadChatHistory(sessionId, title) {
+    _activeSessionId = sessionId;
+    state.sessionId   = sessionId;
+    document.getElementById('session-id-display').textContent = sessionId.slice(0, 12) + '…';
+    renderChatSessionList(); // re-render to mark active
+
+    // Clear messages and show a loading indicator
+    const messages = document.getElementById('chat-messages');
+    const welcome  = document.getElementById('chat-welcome');
+    if (welcome) welcome.style.display = 'none';
+    messages.querySelectorAll('.msg:not(#chat-welcome)').forEach(el => el.remove());
+
+    const typingId = appendTyping();
+    try {
+      const res = await authFetch(`/chat/sessions/${encodeURIComponent(sessionId)}/messages`);
+      removeTyping(typingId);
+      if (!res.ok) { appendMsg('agent', '⚠ Failed to load chat history.'); return; }
+      const data = await res.json();
+      if (!data.messages.length) {
+        appendMsg('agent', 'No messages in this session yet.');
+        return;
+      }
+      data.messages.forEach(m => appendMsg(m.role, m.content, m.created_at));
+    } catch (e) {
+      removeTyping(typingId);
+      appendMsg('agent', `⚠ Error: ${e.message}`);
+    }
+  }
+
+  function startNewChat() {
+    _activeSessionId = null;
+    state.sessionId  = null;
+    document.getElementById('session-id-display').textContent = 'new';
+    // Reset messages area to welcome message
+    const messages = document.getElementById('chat-messages');
+    messages.querySelectorAll('.msg:not(#chat-welcome)').forEach(el => el.remove());
+    const welcome = document.getElementById('chat-welcome');
+    if (welcome) welcome.style.display = 'flex';
+    renderChatSessionList(); // deselect any active
+    document.getElementById('chat-input').focus();
+  }
+
   function fillHint(el) {
     document.getElementById('chat-input').value = el.textContent;
     document.getElementById('chat-input').focus();
@@ -1768,19 +3729,22 @@
     const sendBtn = document.getElementById('chat-send-btn');
     sendBtn.disabled = true;
 
+    // Hide welcome message once user sends first message
+    const welcome = document.getElementById('chat-welcome');
+    if (welcome) welcome.style.display = 'none';
+
     appendMsg('user', msg);
 
     // typing indicator
     const typingId = appendTyping();
 
     try {
-      const res = await fetch('/chat', {
+      const res = await authFetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: msg,
           session_id: state.sessionId,
-          user_id: 'app-user',
         }),
       });
 
@@ -1792,9 +3756,27 @@
       }
 
       const data = await res.json();
+      // Update session state
+      const isNewSession = !state.sessionId || state.sessionId !== data.session_id;
       state.sessionId = data.session_id;
+      _activeSessionId = data.session_id;
       document.getElementById('session-id-display').textContent = data.session_id.slice(0, 12) + '…';
       appendMsg('agent', data.response);
+
+      // Refresh session list if this was a new session
+      if (isNewSession) {
+        await loadChatSessions();
+      } else {
+        // Update the message count in the existing session entry
+        const idx = _chatSessions.findIndex(s => s.session_id === data.session_id);
+        if (idx >= 0) {
+          _chatSessions[idx].message_count = (_chatSessions[idx].message_count || 0) + 1;
+          _chatSessions[idx].last_message_at = new Date().toISOString();
+          renderChatSessionList();
+        } else {
+          await loadChatSessions();
+        }
+      }
     } catch (e) {
       removeTyping(typingId);
       appendMsg('agent', `⚠ Error: ${e.message}`);
@@ -1803,20 +3785,22 @@
     }
   }
 
-  function appendMsg(role, text) {
+  function appendMsg(role, text, isoTime) {
     const messages = document.getElementById('chat-messages');
     const el = document.createElement('div');
     el.className = `msg ${role}`;
 
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = isoTime
+      ? new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const avatarContent = role === 'user' ? 'U' : 'H';
-    const bubbleContent = escHtml(text).replace(/\n/g, '<br/>');
+    const bubbleContent = role === 'agent' ? renderMarkdown(text) : escHtml(text).replace(/\n/g, '<br/>');
 
     el.innerHTML = `
       <div class="msg-avatar">${avatarContent}</div>
       <div>
         <div class="msg-bubble">${bubbleContent}</div>
-        <div class="msg-time">${now}</div>
+        <div class="msg-time">${timeStr}</div>
       </div>`;
 
     messages.appendChild(el);
@@ -1885,9 +3869,144 @@
     }
   }
 
+  /* ── CREATOR PROFILES ── */
+  let _editingProfileId = null;
+
+  async function loadCreatorProfiles() {
+    const list = document.getElementById('profiles-list');
+    if (!list) return;
+    list.innerHTML = '<div style="display:flex;justify-content:center;padding:32px;"><div class="spinner"></div></div>';
+    try {
+      const res = await authFetch('/creator-profiles');
+      if (!res.ok) throw new Error('Failed to load profiles');
+      const data = await res.json();
+      const profiles = data.profiles || [];
+      if (profiles.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state" style="padding:40px 24px;">
+            <div class="empty-icon">♟</div>
+            <div class="empty-title">No profiles yet</div>
+            <div class="empty-desc">Create your first creator profile above. It will be available in the pipeline Creator ID dropdown.</div>
+          </div>`;
+      } else {
+        list.innerHTML = profiles.map(p => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="editProfile('${escHtml(p.creator_id)}')">
+            <div>
+              <div style="font-weight:600;color:var(--text);font-size:13.5px;">${escHtml(p.creator_id)}</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:3px;">
+                ${escHtml(p.tone || '—')} · ${escHtml(p.pacing || '—')} · ${escHtml(p.hook_style || '—')}
+              </div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">CTA: ${escHtml(p.cta || 'Follow for more')}</div>
+          </div>`).join('');
+      }
+      // Also refresh the pipeline dropdown
+      refreshCreatorDropdown(profiles);
+    } catch (e) {
+      list.innerHTML = `<div style="padding:24px;color:var(--red);font-size:13px;">Failed to load profiles</div>`;
+    }
+  }
+
+  function refreshCreatorDropdown(profiles) {
+    const sel = document.getElementById('pipe-creator');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="default">default (niche fallback)</option>';
+    (profiles || []).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.creator_id;
+      opt.textContent = p.creator_id;
+      sel.appendChild(opt);
+    });
+    // Restore selection if it still exists
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+  }
+
+  function editProfile(creatorId) {
+    authFetch(`/creator-profiles/${encodeURIComponent(creatorId)}`).then(r => r.json()).then(p => {
+      document.getElementById('prof-id').value = p.creator_id || '';
+      document.getElementById('prof-id').disabled = true;
+      document.getElementById('prof-tone').value = p.tone || '';
+      document.getElementById('prof-pacing').value = p.pacing || '';
+      document.getElementById('prof-hook').value = p.hook_style || '';
+      document.getElementById('prof-cta').value = p.cta || 'Follow for more';
+      document.getElementById('profile-form-title').textContent = `Edit: ${p.creator_id}`;
+      document.getElementById('prof-delete-btn').style.display = 'inline-flex';
+      _editingProfileId = p.creator_id;
+    }).catch(() => toast('Failed to load profile', 'error'));
+  }
+
+  function resetProfileForm() {
+    document.getElementById('prof-id').value = '';
+    document.getElementById('prof-id').disabled = false;
+    document.getElementById('prof-tone').value = '';
+    document.getElementById('prof-pacing').value = '';
+    document.getElementById('prof-hook').value = '';
+    document.getElementById('prof-cta').value = 'Follow for more';
+    document.getElementById('profile-form-title').textContent = 'New Profile';
+    document.getElementById('prof-delete-btn').style.display = 'none';
+    _editingProfileId = null;
+  }
+
+  async function saveProfile() {
+    const creatorId = (_editingProfileId || document.getElementById('prof-id').value.trim()).toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    if (!creatorId || creatorId === 'default') {
+      toast('Enter a valid profile ID (not "default")', 'error');
+      return;
+    }
+    try {
+      const res = await authFetch('/creator-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creator_id: creatorId,
+          tone: document.getElementById('prof-tone').value.trim(),
+          pacing: document.getElementById('prof-pacing').value.trim(),
+          hook_style: document.getElementById('prof-hook').value.trim(),
+          cta: document.getElementById('prof-cta').value.trim() || 'Follow for more',
+        }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      toast(`Profile "${creatorId}" saved`, 'success');
+      resetProfileForm();
+      loadCreatorProfiles();
+    } catch (e) {
+      toast('Failed to save profile', 'error');
+    }
+  }
+
+  async function deleteProfile() {
+    if (!_editingProfileId) return;
+    if (!confirm(`Delete profile "${_editingProfileId}"?`)) return;
+    try {
+      const res = await authFetch(`/creator-profiles/${encodeURIComponent(_editingProfileId)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      toast(`Profile "${_editingProfileId}" deleted`, 'success');
+      resetProfileForm();
+      loadCreatorProfiles();
+    } catch (e) {
+      toast('Failed to delete profile', 'error');
+    }
+  }
+
   /* ── INIT ── */
-  loadHealth();
-  loadJobs();
+  // Check if user is already logged in
+  if (auth.idToken) {
+    // Verify token is still valid
+    authFetch('/auth/me').then(res => {
+      if (res.ok) {
+        enterApp();
+      } else {
+        clearAuth();
+        document.getElementById('auth-screen').classList.remove('hidden');
+      }
+    }).catch(() => {
+      clearAuth();
+      document.getElementById('auth-screen').classList.remove('hidden');
+    });
+  } else {
+    document.getElementById('auth-screen').classList.remove('hidden');
+  }
 </script>
 </body>
 </html>

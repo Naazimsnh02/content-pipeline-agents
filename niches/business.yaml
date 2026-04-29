@@ -1,0 +1,48 @@
+# Business niche profile
+niche: business
+display_name: Business & Entrepreneurship
+
+# Script style
+tone: "sharp, no-fluff, entrepreneurial — like a mentor who's been in the trenches"
+pacing: "fast — respect the viewer's time, every word earns its place"
+hook_style: "open with a counterintuitive business truth or a revenue number"
+cta: "Follow for daily business insights"
+word_count_target: 160
+format: "hook (5s) → the insight (10s) → 3 actionable lessons (35s) → apply it now (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "clean corporate, whiteboard aesthetics, bold typography, success imagery"
+color_palette: ["#2C3E50", "#E74C3C", "#ECF0F1", "#F39C12"]
+mood: "sharp, ambitious, no-nonsense"
+
+# Caption aesthetics
+caption_highlight_color: "#E74C3C"
+caption_font_weight: "bold"
+caption_style: "word-by-word red highlight on dark background"
+
+# Music
+music_mood: "corporate, motivational, driving"
+music_energy: "medium-high"
+music_bpm_range: [105, 125]
+
+# Voice
+voice_style: "confident, direct, authoritative"
+voice_id: "en-US-GuyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "startup business news this week"
+  - "entrepreneur success story viral this week"
+  - "business strategy insight trending"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 8
+    reason: "Monday morning hustle mindset"
+  - day: "Wednesday"
+    hour_utc: 12
+    reason: "Mid-week productivity peak"
+  - day: "Friday"
+    hour_utc: 9
+    reason: "End-of-week reflection"

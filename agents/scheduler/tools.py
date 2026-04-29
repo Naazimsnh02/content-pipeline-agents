@@ -1,5 +1,5 @@
 """
-Scheduler Agent tools — Google Calendar integration and YouTube scheduled publishing.
+Scheduler Agent tools — Google Calendar integration and optimal posting time selection.
 Falls back to demo mode if credentials are not configured.
 """
 from __future__ import annotations
@@ -9,30 +9,9 @@ from typing import Optional
 
 from shared.config import settings
 from shared.database import db
+from shared.niches import get_posting_windows
 
 logger = logging.getLogger(__name__)
-
-# ── Optimal posting time heuristics ──────────────────────────────────────────
-
-_OPTIMAL_WINDOWS: dict[str, list[dict]] = {
-    "tech": [
-        {"day": "Tuesday", "hour_utc": 14, "reason": "Tech professionals on lunch break (US EST 10am)"},
-        {"day": "Thursday", "hour_utc": 14, "reason": "End-of-week tech news cycle"},
-        {"day": "Saturday", "hour_utc": 10, "reason": "Weekend morning browsing"},
-    ],
-    "finance": [
-        {"day": "Monday", "hour_utc": 12, "reason": "Start-of-week financial planning"},
-        {"day": "Wednesday", "hour_utc": 13, "reason": "Mid-week market update time"},
-    ],
-    "fitness": [
-        {"day": "Monday", "hour_utc": 9, "reason": "New week motivation"},
-        {"day": "Sunday", "hour_utc": 11, "reason": "Weekend workout planning"},
-    ],
-    "general": [
-        {"day": "Wednesday", "hour_utc": 14, "reason": "Mid-week peak engagement"},
-        {"day": "Saturday", "hour_utc": 11, "reason": "Weekend browsing peak"},
-    ],
-}
 
 
 def find_optimal_post_time(niche: str, deadline: Optional[str] = None) -> dict:
@@ -47,7 +26,7 @@ def find_optimal_post_time(niche: str, deadline: Optional[str] = None) -> dict:
     Returns:
         A dict with recommended publish_at (ISO string), day, hour_utc, reason.
     """
-    windows = _OPTIMAL_WINDOWS.get(niche, _OPTIMAL_WINDOWS["general"])
+    windows = get_posting_windows(niche)
     now = datetime.now(timezone.utc)
 
     # If deadline is a day name, find next occurrence
@@ -103,6 +82,7 @@ def create_calendar_event(
     publish_at: str,
     description: str = "",
     video_id: str = "",
+    user_uid: str = "",
 ) -> dict:
     """
     Create a Google Calendar event for the video publishing deadline.
@@ -112,24 +92,18 @@ def create_calendar_event(
         publish_at: ISO datetime string for when to publish.
         description: Event description with video details.
         video_id: Internal video job ID for reference.
+        user_uid: Firebase UID of the user — used to load their connected Calendar.
 
     Returns:
         A dict with calendar_event_id and calendar_event_url.
     """
-    if settings.demo_mode or not settings.has_calendar:
-        fake_event_id = f"demo_event_{video_id or int(datetime.now().timestamp())}"
-        return {
-            "calendar_event_id": fake_event_id,
-            "calendar_event_url": f"https://calendar.google.com/event?eid={fake_event_id}",
-            "demo": not settings.has_calendar,
-            "message": f"[{'DEMO' if settings.demo_mode else 'NO_CREDS'}] Calendar event would be created: '{title}' at {publish_at}",
-        }
+    from shared.calendar_oauth import get_user_calendar_credentials
 
-    try:
+    creds = get_user_calendar_credentials(user_uid) if user_uid else None
+
+    # Fall back to env-based config for backward compatibility
+    if not creds and settings.calendar_refresh_token and not settings.demo_mode:
         from google.oauth2.credentials import Credentials
-        from googleapiclient.discovery import build
-        from datetime import timedelta
-
         creds = Credentials(
             token=None,
             refresh_token=settings.calendar_refresh_token,
@@ -137,6 +111,19 @@ def create_calendar_event(
             client_secret=settings.calendar_client_secret,
             token_uri="https://oauth2.googleapis.com/token",
         )
+
+    if settings.demo_mode or not creds:
+        fake_event_id = f"demo_event_{video_id or int(datetime.now().timestamp())}"
+        return {
+            "calendar_event_id": fake_event_id,
+            "calendar_event_url": f"https://calendar.google.com/event?eid={fake_event_id}",
+            "demo": not creds,
+            "message": f"[{'DEMO' if settings.demo_mode else 'NO_CREDS'}] Calendar event would be created: '{title}' at {publish_at}",
+        }
+
+    try:
+        from googleapiclient.discovery import build
+
         service = build("calendar", "v3", credentials=creds)
 
         start_dt = datetime.fromisoformat(publish_at)
@@ -146,7 +133,7 @@ def create_calendar_event(
             "summary": title,
             "description": description or f"YouTube Short publishing task. Video ID: {video_id}",
             "start": {"dateTime": start_dt.isoformat(), "timeZone": "UTC"},
-            "end": {"dateTime": end_dt.isoformat(), "timeZone": "UTC"},
+            "end":   {"dateTime": end_dt.isoformat(),   "timeZone": "UTC"},
             "reminders": {
                 "useDefault": False,
                 "overrides": [
@@ -167,63 +154,15 @@ def create_calendar_event(
             "created": True,
         }
     except Exception as exc:
+        error_str = str(exc)
         logger.error("Calendar event creation failed: %s", exc)
-        return {"error": str(exc), "calendar_event_id": None}
-
-
-def schedule_youtube_publish(youtube_video_id: str, publish_at: str) -> dict:
-    """
-    Schedule a YouTube video to automatically publish at the given time.
-    The video must already be uploaded as 'private'.
-
-    Args:
-        youtube_video_id: The YouTube video ID (e.g. "dQw4w9WgXcQ").
-        publish_at: ISO datetime string for when to make the video public.
-
-    Returns:
-        A dict confirming the scheduled publish time.
-    """
-    if settings.demo_mode or not settings.has_youtube:
-        return {
-            "youtube_video_id": youtube_video_id,
-            "scheduled_at": publish_at,
-            "demo": True,
-            "message": f"[{'DEMO' if settings.demo_mode else 'NO_CREDS'}] Would schedule video {youtube_video_id} to publish at {publish_at}.",
-        }
-
-    try:
-        from google.oauth2.credentials import Credentials
-        from googleapiclient.discovery import build
-
-        creds = Credentials(
-            token=None,
-            refresh_token=settings.youtube_refresh_token,
-            client_id=settings.youtube_client_id,
-            client_secret=settings.youtube_client_secret,
-            token_uri="https://oauth2.googleapis.com/token",
-        )
-        youtube = build("youtube", "v3", credentials=creds)
-
-        youtube.videos().update(
-            part="status",
-            body={
-                "id": youtube_video_id,
-                "status": {
-                    "privacyStatus": "private",
-                    "publishAt": publish_at,
-                },
-            },
-        ).execute()
-
-        return {
-            "youtube_video_id": youtube_video_id,
-            "scheduled_at": publish_at,
-            "scheduled": True,
-            "message": f"Video {youtube_video_id} scheduled to publish at {publish_at}.",
-        }
-    except Exception as exc:
-        logger.error("YouTube schedule failed: %s", exc)
-        return {"error": str(exc)}
+        if "invalid_grant" in error_str:
+            return {
+                "error": "Calendar OAuth token expired or revoked. Please reconnect Calendar in Settings.",
+                "calendar_event_id": None,
+                "auth_error": True,
+            }
+        return {"error": error_str, "calendar_event_id": None}
 
 
 def save_schedule(

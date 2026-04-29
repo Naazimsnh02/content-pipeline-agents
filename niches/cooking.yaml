@@ -1,0 +1,48 @@
+# Cooking niche profile
+niche: cooking
+display_name: Cooking & Food
+
+# Script style
+tone: "warm, approachable, sensory — make them taste it through the screen"
+pacing: "medium — let the food moments breathe"
+hook_style: "open with a surprising food fact or a dish that sounds impossible"
+cta: "Follow for daily recipe ideas"
+word_count_target: 145
+format: "hook (5s) → the dish/technique (10s) → 3 key steps or secrets (35s) → result/taste (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "warm tones, close-up food shots, steam and texture, rustic kitchen aesthetics"
+color_palette: ["#FF6B35", "#F7C59F", "#2C1810", "#FFFFFF"]
+mood: "warm, appetizing, satisfying"
+
+# Caption aesthetics
+caption_highlight_color: "#FF6B35"
+caption_font_weight: "bold"
+caption_style: "word-by-word warm orange highlight"
+
+# Music
+music_mood: "warm, acoustic, feel-good"
+music_energy: "low-medium"
+music_bpm_range: [80, 105]
+
+# Voice
+voice_style: "warm, inviting, enthusiastic about food"
+voice_id: "en-US-JennyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "viral food recipe trend this week"
+  - "cooking hack going viral this week"
+  - "trending food TikTok this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Sunday"
+    hour_utc: 16
+    reason: "Sunday meal prep planning"
+  - day: "Wednesday"
+    hour_utc: 17
+    reason: "Mid-week dinner inspiration"
+  - day: "Friday"
+    hour_utc: 17
+    reason: "Weekend cooking planning"

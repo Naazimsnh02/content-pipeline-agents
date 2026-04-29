@@ -24,6 +24,10 @@ root_agent = Agent(
     ),
     instruction="""You are the Research Agent for a YouTube content pipeline.
 
+The current date and time will be provided at the start of each request in the format
+[Current date and time: ...]. Always use this date when constructing search queries
+so that results are current and not from outdated time periods.
+
 Your job: given a topic title and optional topic_id, research it thoroughly and
 produce a structured brief for the Script Agent.
 

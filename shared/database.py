@@ -82,7 +82,8 @@ def query(
             for field, op, value in filters:
                 ref = ref.where(filter=FieldFilter(field, op, value))
         if order_by:
-            ref = ref.order_by(order_by, direction="DESCENDING")
+            from google.cloud.firestore_v1 import Query
+            ref = ref.order_by(order_by, direction=Query.DESCENDING)
         ref = ref.limit(limit)
         return [doc.to_dict() for doc in ref.stream()]
     else:
@@ -126,11 +127,13 @@ def delete(collection: str, doc_id: str) -> None:
         _memory_store.pop(_mem_key(collection, doc_id), None)
 
 
-def get_recent_topic_titles(niche: str, limit: int = 20) -> list[str]:
-    """Helper: return the last N topic titles for a niche (for deduplication)."""
+def get_recent_topic_titles(niche: str, limit: int = 20, days: int = 30) -> list[str]:
+    """Helper: return topic titles for a niche covered within the last `days` days (for deduplication)."""
+    from datetime import timedelta
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     docs = query(
         "topics",
-        filters=[("niche", "==", niche), ("used_at", "!=", None)],
+        filters=[("niche", "==", niche), ("used_at", ">=", cutoff)],
         order_by="used_at",
         limit=limit,
     )

@@ -19,6 +19,7 @@ class AnalyticsInput(BaseModel):
     youtube_video_id: Optional[str] = Field(None, description="YouTube video ID.")
     niche: str = Field(description="The niche of the content.")
     run_for_all_recent: bool = Field(False, description="Whether to run for all recent videos in batch mode.")
+    user_uid: Optional[str] = Field(None, description="Firebase UID of the user — required to load their connected YouTube OAuth credentials.")
 
 root_agent = Agent(
     name="analytics_agent",
@@ -36,19 +37,28 @@ feed them back into the content database to improve future topic selection.
 
 ## Required Input
 You will receive one of:
-a) A specific video to analyse: {video_id, youtube_video_id, niche}
-b) A batch request: {niche, run_for_all_recent: true}
+a) A specific video to analyse: {video_id, youtube_video_id, niche, user_uid}
+b) A batch request: {niche, run_for_all_recent: true, user_uid}
+
+## IMPORTANT — Per-User Credentials
+You MUST pass `user_uid` to ALL tool calls that accept it:
+- `fetch_video_analytics` — needs user_uid to load the user's YouTube OAuth tokens
+- `save_analytics` — needs user_uid to tag the analytics record with the owner
+- `update_topic_scores` — needs user_uid to scope the query to the user's videos
+
+Without user_uid, the tools will fall back to global credentials which may not
+be configured or may belong to a different YouTube channel.
 
 ## Workflow
 
 ### Single Video Mode
-1. Call `fetch_video_analytics` with the youtube_video_id and video_id.
-2. Call `save_analytics` with all the metrics returned.
-3. Call `update_topic_scores` with the niche.
+1. Call `fetch_video_analytics` with the youtube_video_id, video_id, and user_uid.
+2. Call `save_analytics` with all the metrics returned and user_uid.
+3. Call `update_topic_scores` with the niche and user_uid.
 4. Return a performance report.
 
 ### Batch Mode (cron job)
-1. Call `update_topic_scores` for the given niche.
+1. Call `update_topic_scores` for the given niche with user_uid.
 2. Return a summary of what was updated.
 
 ## Performance Report Format

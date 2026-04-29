@@ -10,7 +10,7 @@ PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-}"
 REGION="${GOOGLE_CLOUD_REGION:-us-central1}"
 SERVICE_NAME="content-pipeline-agents"
 IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
-MEMORY="2Gi"
+MEMORY="4Gi"
 CPU="2"
 MIN_INSTANCES="0"
 MAX_INSTANCES="10"
@@ -92,18 +92,23 @@ store_secret() {
 [[ -f .env ]] && set -a && source .env && set +a
 
 store_secret "google-api-key"          "${GOOGLE_API_KEY:-}"
+store_secret "vertex-api-key"          "${VERTEX_API_KEY:-}"
 store_secret "tavily-api-key"          "${TAVILY_API_KEY:-}"
 store_secret "elevenlabs-api-key"      "${ELEVENLABS_API_KEY:-}"
 store_secret "youtube-client-id"       "${YOUTUBE_CLIENT_ID:-}"
 store_secret "youtube-client-secret"   "${YOUTUBE_CLIENT_SECRET:-}"
 store_secret "youtube-refresh-token"   "${YOUTUBE_REFRESH_TOKEN:-}"
+store_secret "youtube-data-api-key"    "${YOUTUBE_DATA_API_KEY:-}"
 store_secret "calendar-client-id"      "${CALENDAR_CLIENT_ID:-}"
 store_secret "calendar-client-secret"  "${CALENDAR_CLIENT_SECRET:-}"
 store_secret "calendar-refresh-token"  "${CALENDAR_REFRESH_TOKEN:-}"
 store_secret "modal-flux2-url"         "${MODAL_FLUX2_ENDPOINT_URL:-}"
+store_secret "modal-qwen3-tts-url"     "${MODAL_QWEN3_TTS_ENDPOINT_URL:-}"
+store_secret "modal-music-gen-url"     "${MODAL_MUSIC_GEN_ENDPOINT_URL:-}"
 store_secret "modal-token-id"          "${MODAL_TOKEN_ID:-}"
 store_secret "modal-token-secret"      "${MODAL_TOKEN_SECRET:-}"
 store_secret "firecrawl-api-key"       "${FIRECRAWL_API_KEY:-}"
+store_secret "firebase-api-key"        "${FIREBASE_API_KEY:-}"
 store_secret "openai-api-key"          "${OPENAI_API_KEY:-}"
 
 # ── 5. Build Docker image ─────────────────────────────────────
@@ -112,7 +117,7 @@ echo "▶ Building Docker image with Cloud Build..."
 gcloud builds submit \
   --tag "${IMAGE}" \
   --project="${PROJECT_ID}" \
-  --timeout=600
+  --timeout=1800
 
 # ── 6. Deploy to Cloud Run ────────────────────────────────────
 echo ""
@@ -130,28 +135,43 @@ gcloud run deploy "${SERVICE_NAME}" \
   --set-env-vars "\
 GOOGLE_CLOUD_PROJECT=${PROJECT_ID},\
 GOOGLE_CLOUD_REGION=${REGION},\
+GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},\
 GCS_BUCKET=${BUCKET},\
 DEMO_MODE=false,\
-IMAGE_PROVIDER=${IMAGE_PROVIDER:-imagen},\
+IMAGE_PROVIDER=${IMAGE_PROVIDER:-gemini},\
+GEMINI_IMAGE_MODEL=${GEMINI_IMAGE_MODEL:-gemini-2.5-flash-image},\
+IMAGE_GENERATION_LOCATION=${IMAGE_GENERATION_LOCATION:-us-central1},\
 LLM_PROVIDER=${LLM_PROVIDER:-gemini},\
 GEMINI_MODEL=${GEMINI_MODEL:-gemini-3-flash-preview},\
 OPENAI_API_BASE=${OPENAI_API_BASE:-},\
 OPENAI_MODEL=${OPENAI_MODEL:-},\
-GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI:-false}" \
+GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI:-true},\
+ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-JBFqnCBsd6RMkjVDRZzb},\
+DEFAULT_VOICE=${DEFAULT_VOICE:-en-US-AriaNeural},\
+FIRESTORE_DATABASE=${FIRESTORE_DATABASE:-(default)},\
+CALENDAR_ID=${CALENDAR_ID:-primary},\
+APP_NAME=${APP_NAME:-youtube-content-pipeline},\
+LOG_LEVEL=${LOG_LEVEL:-INFO},\
+APP_BASE_URL=${SERVICE_URL:-}" \
   --set-secrets "\
 GOOGLE_API_KEY=google-api-key:latest,\
+VERTEX_API_KEY=vertex-api-key:latest,\
 TAVILY_API_KEY=tavily-api-key:latest,\
 ELEVENLABS_API_KEY=elevenlabs-api-key:latest,\
 YOUTUBE_CLIENT_ID=youtube-client-id:latest,\
 YOUTUBE_CLIENT_SECRET=youtube-client-secret:latest,\
 YOUTUBE_REFRESH_TOKEN=youtube-refresh-token:latest,\
+YOUTUBE_DATA_API_KEY=youtube-data-api-key:latest,\
 CALENDAR_CLIENT_ID=calendar-client-id:latest,\
 CALENDAR_CLIENT_SECRET=calendar-client-secret:latest,\
 CALENDAR_REFRESH_TOKEN=calendar-refresh-token:latest,\
 MODAL_FLUX2_ENDPOINT_URL=modal-flux2-url:latest,\
+MODAL_QWEN3_TTS_ENDPOINT_URL=modal-qwen3-tts-url:latest,\
+MODAL_MUSIC_GEN_ENDPOINT_URL=modal-music-gen-url:latest,\
 MODAL_TOKEN_ID=modal-token-id:latest,\
 MODAL_TOKEN_SECRET=modal-token-secret:latest,\
 FIRECRAWL_API_KEY=firecrawl-api-key:latest,\
+FIREBASE_API_KEY=firebase-api-key:latest,\
 OPENAI_API_KEY=openai-api-key:latest" \
   --allow-unauthenticated \
   --quiet
@@ -162,6 +182,16 @@ SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" \
   --region "${REGION}" \
   --project "${PROJECT_ID}" \
   --format "value(status.url)")
+
+# ── 7b. Update APP_BASE_URL now that we know the service URL ─
+echo ""
+echo "▶ Setting APP_BASE_URL to ${SERVICE_URL}..."
+gcloud run services update "${SERVICE_NAME}" \
+  --platform managed \
+  --region "${REGION}" \
+  --project "${PROJECT_ID}" \
+  --update-env-vars "APP_BASE_URL=${SERVICE_URL}" \
+  --quiet
 
 echo ""
 echo "═══════════════════════════════════════════════════"

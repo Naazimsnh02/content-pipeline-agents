@@ -1,0 +1,48 @@
+# Beauty niche profile
+niche: beauty
+display_name: Beauty & Skincare
+
+# Script style
+tone: "friendly, knowledgeable, honest — like a trusted friend who knows beauty"
+pacing: "medium — let product moments and tips land"
+hook_style: "open with a beauty myth bust or a product that went viral"
+cta: "Follow for honest beauty tips daily"
+word_count_target: 145
+format: "hook (5s) → the product/technique (10s) → 3 tips or steps (35s) → result (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "soft lighting, pastel tones, close-up skin and product shots, clean aesthetic"
+color_palette: ["#FF69B4", "#FFB6C1", "#FFF0F5", "#8B008B"]
+mood: "soft, aspirational, trustworthy"
+
+# Caption aesthetics
+caption_highlight_color: "#FF69B4"
+caption_font_weight: "bold"
+caption_style: "word-by-word pink highlight on light background"
+
+# Music
+music_mood: "soft pop, upbeat, feel-good"
+music_energy: "low-medium"
+music_bpm_range: [90, 115]
+
+# Voice
+voice_style: "friendly, warm, enthusiastic"
+voice_id: "en-US-JennyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "viral beauty skincare trend this week"
+  - "beauty product going viral this week"
+  - "skincare routine hack trending"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Saturday"
+    hour_utc: 11
+    reason: "Weekend beauty routine time"
+  - day: "Sunday"
+    hour_utc: 12
+    reason: "Sunday self-care peak"
+  - day: "Thursday"
+    hour_utc: 18
+    reason: "Pre-weekend beauty prep"

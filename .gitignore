@@ -34,6 +34,8 @@ venv.bak/
 # Secrets
 client_secret.json
 scripts/client_secret.json
+client_secret_*.json
+scripts/client_secret_*.json
 *.pem
 *.key
 

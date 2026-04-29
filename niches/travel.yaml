@@ -1,0 +1,48 @@
+# Travel niche profile
+niche: travel
+display_name: Travel & Adventure
+
+# Script style
+tone: "adventurous, vivid, inspiring — paint the destination with words"
+pacing: "medium — let the visuals breathe, don't rush the journey"
+hook_style: "open with a place that sounds unreal or a travel hack that saves money"
+cta: "Follow for hidden travel gems daily"
+word_count_target: 145
+format: "hook (5s) → the destination/hack (10s) → 3 must-knows (35s) → why go now (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "golden hour landscapes, vibrant street scenes, aerial drone shots, wanderlust aesthetics"
+color_palette: ["#F39C12", "#27AE60", "#1A3A4A", "#FFFFFF"]
+mood: "adventurous, inspiring, wanderlust"
+
+# Caption aesthetics
+caption_highlight_color: "#F39C12"
+caption_font_weight: "bold"
+caption_style: "word-by-word golden highlight"
+
+# Music
+music_mood: "adventurous, world music, uplifting"
+music_energy: "medium-high"
+music_bpm_range: [100, 125]
+
+# Voice
+voice_style: "adventurous, warm, inspiring"
+voice_id: "en-US-JennyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "viral travel destination trend this week"
+  - "travel hack going viral this week"
+  - "hidden gem travel spot trending"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Thursday"
+    hour_utc: 18
+    reason: "Pre-weekend travel planning"
+  - day: "Sunday"
+    hour_utc: 14
+    reason: "Sunday travel dreaming"
+  - day: "Tuesday"
+    hour_utc: 12
+    reason: "Mid-week escape planning"

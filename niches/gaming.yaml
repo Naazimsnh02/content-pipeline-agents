@@ -1,0 +1,48 @@
+# Gaming niche profile
+niche: gaming
+display_name: Gaming
+
+# Script style
+tone: "hype, casual, insider — like talking to a fellow gamer"
+pacing: "fast — match the energy of gameplay"
+hook_style: "open with a shocking game reveal or record-breaking stat"
+cta: "Follow for daily gaming news"
+word_count_target: 155
+format: "hook (5s) → what happened (10s) → 3 biggest details (35s) → community reaction (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "vibrant, game-art inspired, dark with RGB lighting accents, controller and screen aesthetics"
+color_palette: ["#9B59B6", "#E74C3C", "#1A1A2E", "#00FF88"]
+mood: "hype, exciting, community-driven"
+
+# Caption aesthetics
+caption_highlight_color: "#9B59B6"
+caption_font_weight: "bold"
+caption_style: "word-by-word purple highlight, gaming font style"
+
+# Music
+music_mood: "epic, electronic, game soundtrack inspired"
+music_energy: "high"
+music_bpm_range: [120, 150]
+
+# Voice
+voice_style: "enthusiastic, casual, gamer energy"
+voice_id: "en-US-TonyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "trending gaming news releases this week"
+  - "viral gaming moment this week"
+  - "new game announcement this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Friday"
+    hour_utc: 18
+    reason: "Weekend gaming session start"
+  - day: "Saturday"
+    hour_utc: 15
+    reason: "Peak gaming hours"
+  - day: "Sunday"
+    hour_utc: 16
+    reason: "Sunday gaming peak"

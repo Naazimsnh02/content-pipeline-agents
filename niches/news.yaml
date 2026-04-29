@@ -1,0 +1,48 @@
+# News niche profile
+niche: news
+display_name: News & Current Events
+
+# Script style
+tone: "neutral, factual, urgent — just the facts, delivered fast"
+pacing: "fast — news moves fast, so does this"
+hook_style: "open with the headline that everyone needs to know right now"
+cta: "Follow to stay informed daily"
+word_count_target: 155
+format: "headline hook (5s) → what happened (10s) → 3 key facts (35s) → what's next (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "news broadcast aesthetic, bold lower thirds, breaking news graphics, clean and urgent"
+color_palette: ["#C0392B", "#2C3E50", "#ECF0F1", "#F39C12"]
+mood: "urgent, informative, trustworthy"
+
+# Caption aesthetics
+caption_highlight_color: "#C0392B"
+caption_font_weight: "bold"
+caption_style: "word-by-word red highlight, news ticker style"
+
+# Music
+music_mood: "news broadcast, tense, informative"
+music_energy: "medium"
+music_bpm_range: [100, 120]
+
+# Voice
+voice_style: "neutral, clear, broadcast quality"
+voice_id: "en-US-GuyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "breaking news today viral"
+  - "world news trending this week"
+  - "major news event this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 9
+    reason: "Monday morning news check"
+  - day: "Wednesday"
+    hour_utc: 12
+    reason: "Mid-week news update"
+  - day: "Friday"
+    hour_utc: 10
+    reason: "End-of-week news wrap"

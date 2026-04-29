@@ -1,0 +1,48 @@
+# History niche profile
+niche: history
+display_name: History & True Stories
+
+# Script style
+tone: "dramatic, storytelling, vivid — make history feel alive and urgent"
+pacing: "medium — build tension, let dramatic moments breathe"
+hook_style: "open with the most dramatic moment of the story, then rewind"
+cta: "Follow for history's most insane stories"
+word_count_target: 155
+format: "hook — dramatic moment (5s) → rewind/context (10s) → 3 story beats (35s) → legacy/lesson (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "vintage photography, sepia tones, dramatic lighting, historical maps and artifacts"
+color_palette: ["#8B4513", "#D4A017", "#1C1008", "#F5F0E8"]
+mood: "dramatic, epic, educational"
+
+# Caption aesthetics
+caption_highlight_color: "#D4A017"
+caption_font_weight: "bold"
+caption_style: "word-by-word gold highlight on dark sepia background"
+
+# Music
+music_mood: "epic orchestral, dramatic, cinematic"
+music_energy: "medium-high"
+music_bpm_range: [90, 120]
+
+# Voice
+voice_style: "dramatic, storytelling, gravitas"
+voice_id: "en-US-GuyNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "history fact viral this week"
+  - "historical event anniversary this week"
+  - "untold history story trending"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Saturday"
+    hour_utc: 14
+    reason: "Weekend learning and curiosity"
+  - day: "Sunday"
+    hour_utc: 15
+    reason: "Sunday documentary mood"
+  - day: "Tuesday"
+    hour_utc: 16
+    reason: "Mid-week curiosity peak"

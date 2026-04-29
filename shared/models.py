@@ -62,6 +62,7 @@ class Script(BaseModel):
     word_count: int = 0
     estimated_duration_s: int = 60
     creator_id: str = "default"
+    pipeline_job_id: Optional[str] = None   # links back to pipeline_jobs collection
     created_at: datetime = Field(default_factory=now_utc)
 
 
@@ -77,12 +78,15 @@ class VideoStatus(str):
 class VideoJob(BaseModel):
     id: str = Field(default_factory=new_id)
     script_id: str
+    pipeline_job_id: Optional[str] = None   # links back to pipeline_jobs collection
+    user_id: Optional[str] = None           # Firebase UID — needed for ownership queries
     status: str = "pending"
     progress: int = 0                    # 0–100
     current_stage: str = ""              # "tts" | "images" | "assembly" | "upload"
     voiceover_path: Optional[str] = None
     image_paths: list[str] = []
     video_path: Optional[str] = None     # GCS URI
+    thumbnail_gcs_uri: Optional[str] = None  # GCS URI for the thumbnail PNG
     youtube_video_id: Optional[str] = None
     youtube_url: Optional[str] = None
     error: Optional[str] = None
@@ -114,7 +118,7 @@ class VideoAnalytics(BaseModel):
     comments: int = 0
     impressions: int = 0
     ctr: float = 0.0                     # click-through rate
-    fetched_at: datetime = Field(default_factory=datetime.utcnow)
+    fetched_at: datetime = Field(default_factory=now_utc)
 
 
 # ── Creator Profile (stored in Firestore) ───────────────────────────────────
@@ -135,17 +139,31 @@ class CreatorProfile(BaseModel):
 # ── Pipeline Request (API input) ─────────────────────────────────────────────
 
 class PipelineRequest(BaseModel):
-    request: str                         # Natural language request
-    niche: str = "tech"
-    creator_id: str = "default"
-    deadline: Optional[str] = None      # ISO date string or natural language
+    """Submit a content pipeline job."""
+    request: str = Field(..., description="Natural language description of the video you want (e.g. 'Create a Short about GPT-5 rumors')")
+    niche: str = Field("tech", description="Content niche — controls tone, visuals, music, and posting time. One of: tech, fitness, cooking, crypto, etc.")
+    creator_id: str = Field("default", description="Creator profile ID to use for tone/pacing/CTA preferences")
+    deadline: Optional[str] = Field(None, description="When to publish — ISO date string or natural language (e.g. 'Tuesday 9am')")
 
 class PipelineResponse(BaseModel):
-    job_id: str
-    topic: Optional[str] = None
-    script_id: Optional[str] = None
-    video_job_id: Optional[str] = None
-    publish_at: Optional[str] = None
-    calendar_event_url: Optional[str] = None
-    status_url: str
-    coordinator_response: str
+    """Pipeline job created — track progress via status_url or SSE stream."""
+    job_id: str = Field(..., description="Unique pipeline job ID")
+    topic: Optional[str] = Field(None, description="Selected topic title (populated after ideas stage)")
+    script_id: Optional[str] = Field(None, description="Generated script ID (populated after script stage)")
+    video_job_id: Optional[str] = Field(None, description="Video production job ID (populated after production stage)")
+    publish_at: Optional[str] = Field(None, description="Scheduled publish time ISO string")
+    calendar_event_url: Optional[str] = Field(None, description="Google Calendar event URL")
+    status_url: str = Field(..., description="URL to poll for job status: GET /pipeline/{job_id}")
+    coordinator_response: str = Field(..., description="Coordinator agent's initial response text")
+
+
+# ── Twitter/X Content (Script Agent output) ─────────────────────────────────
+
+class TwitterContent(BaseModel):
+    id: str = Field(default_factory=new_id)
+    script_id: str
+    pipeline_job_id: Optional[str] = None   # links back to pipeline_jobs collection
+    thread_tweets: list[str] = []        # 3-5 tweets, each ≤280 chars
+    long_post: str = ""                  # 500-1000 chars for X long-form
+    hashtags: list[str] = []
+    created_at: datetime = Field(default_factory=now_utc)

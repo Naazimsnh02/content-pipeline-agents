@@ -1,0 +1,48 @@
+# Education niche profile
+niche: education
+display_name: Education & Learning
+
+# Script style
+tone: "clear, engaging, Socratic — ask questions, then answer them brilliantly"
+pacing: "medium — let concepts land before moving on"
+hook_style: "open with a question most people get wrong"
+cta: "Follow to learn something new every day"
+word_count_target: 150
+format: "hook question (5s) → why it matters (10s) → 3 key concepts (35s) → the answer/insight (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "clean whiteboard, diagrams, bold text overlays, bright and clear"
+color_palette: ["#3498DB", "#2ECC71", "#FFFFFF", "#2C3E50"]
+mood: "curious, clear, empowering"
+
+# Caption aesthetics
+caption_highlight_color: "#3498DB"
+caption_font_weight: "bold"
+caption_style: "word-by-word blue highlight on white background"
+
+# Music
+music_mood: "light, curious, lo-fi study vibes"
+music_energy: "low"
+music_bpm_range: [75, 95]
+
+# Voice
+voice_style: "clear, engaging, teacher energy"
+voice_id: "en-US-AriaNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "education learning fact viral this week"
+  - "study skill productivity hack trending"
+  - "interesting knowledge fact going viral"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Tuesday"
+    hour_utc: 16
+    reason: "After-school/work learning time"
+  - day: "Thursday"
+    hour_utc: 15
+    reason: "Pre-weekend study motivation"
+  - day: "Sunday"
+    hour_utc: 10
+    reason: "Sunday morning learning"

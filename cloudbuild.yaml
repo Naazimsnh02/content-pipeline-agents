@@ -39,8 +39,8 @@ steps:
       - --cpu=2
       - --timeout=3600
       - --allow-unauthenticated
-      - --set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,DEMO_MODE=false
-      - --set-secrets=GOOGLE_API_KEY=google-api-key:latest
+      - --set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=us-central1,GOOGLE_CLOUD_LOCATION=global,DEMO_MODE=false,IMAGE_PROVIDER=gemini,GEMINI_IMAGE_MODEL=gemini-2.5-flash-image,IMAGE_GENERATION_LOCATION=us-central1,LLM_PROVIDER=gemini,GEMINI_MODEL=gemini-3-flash-preview,GOOGLE_GENAI_USE_VERTEXAI=true,ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb,DEFAULT_VOICE=en-US-AriaNeural,FIRESTORE_DATABASE=(default),CALENDAR_ID=primary,APP_NAME=youtube-content-pipeline,LOG_LEVEL=INFO
+      - --set-secrets=GOOGLE_API_KEY=google-api-key:latest,VERTEX_API_KEY=vertex-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,ELEVENLABS_API_KEY=elevenlabs-api-key:latest,YOUTUBE_CLIENT_ID=youtube-client-id:latest,YOUTUBE_CLIENT_SECRET=youtube-client-secret:latest,YOUTUBE_REFRESH_TOKEN=youtube-refresh-token:latest,YOUTUBE_DATA_API_KEY=youtube-data-api-key:latest,CALENDAR_CLIENT_ID=calendar-client-id:latest,CALENDAR_CLIENT_SECRET=calendar-client-secret:latest,CALENDAR_REFRESH_TOKEN=calendar-refresh-token:latest,MODAL_FLUX2_ENDPOINT_URL=modal-flux2-url:latest,MODAL_QWEN3_TTS_ENDPOINT_URL=modal-qwen3-tts-url:latest,MODAL_MUSIC_GEN_ENDPOINT_URL=modal-music-gen-url:latest,MODAL_TOKEN_ID=modal-token-id:latest,MODAL_TOKEN_SECRET=modal-token-secret:latest,FIRECRAWL_API_KEY=firecrawl-api-key:latest,FIREBASE_API_KEY=firebase-api-key:latest,OPENAI_API_KEY=openai-api-key:latest
 
 images:
   - gcr.io/$PROJECT_ID/content-pipeline-agents:$SHORT_SHA

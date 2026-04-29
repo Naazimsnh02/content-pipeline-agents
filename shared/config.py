@@ -26,6 +26,9 @@ class Settings(BaseSettings):
 
     # ── Gemini / Google AI ──────────────────────────────────
     google_api_key: str = ""
+    # Vertex AI Express API key (higher quota than AI Studio free tier).
+    # When set, used instead of google_api_key so ADK hits paid-tier quotas.
+    vertex_api_key: str = ""
     gemini_model: str = "gemini-3-flash-preview"
     # Set to "true" to route through Vertex AI instead of AI Studio
     google_genai_use_vertexai: bool = False
@@ -43,14 +46,43 @@ class Settings(BaseSettings):
     openai_model: str = "moonshotai/Kimi-K2.5"
 
     # ── Image Generation ────────────────────────────────────
-    image_provider: str = "imagen"  # "imagen" or "flux2"
+    # "imagen" → Imagen 3/4 via generate_images API
+    # "gemini" → Gemini native image gen (gemini-2.5-flash-image) via generate_content
+    # "flux2"  → Modal Flux.2 endpoint
+    image_provider: str = "imagen"
+    # Model ID for Gemini native image generation (used when image_provider="gemini")
+    gemini_image_model: str = "gemini-2.5-flash-image"
+    # Location override for image generation (e.g. "us-central1").
+    # If empty, falls back to google_cloud_location.
+    # Useful when LLM uses "global" but image gen works better on a specific region.
+    image_generation_location: str = ""
     modal_flux2_endpoint_url: Optional[str] = None
     modal_token_id: Optional[str] = None
     modal_token_secret: Optional[str] = None
     firestore_database: str = "(default)"
 
+    @property
+    def has_modal_auth(self) -> bool:
+        """True if real Modal tokens are configured (not placeholder 'none')."""
+        return bool(
+            self.modal_token_id
+            and self.modal_token_secret
+            and self.modal_token_id.lower() not in ("none", "")
+            and self.modal_token_secret.lower() not in ("none", "")
+        )
+
+    @property
+    def effective_image_location(self) -> str:
+        """Location for image generation — uses IMAGE_GENERATION_LOCATION if set,
+        otherwise falls back to GOOGLE_CLOUD_LOCATION."""
+        return self.image_generation_location or self.google_cloud_location
+
     # ── Cloud Storage ───────────────────────────────────────
     gcs_bucket: str = ""
+    # Service account email used for signing GCS URLs via IAM impersonation.
+    # Required when running locally with user ADC (gcloud auth login).
+    # The user account must have roles/iam.serviceAccountTokenCreator on this SA.
+    gcs_service_account: str = ""
 
     # ── Research ────────────────────────────────────────────
     tavily_api_key: Optional[str] = None
@@ -65,12 +97,29 @@ class Settings(BaseSettings):
     youtube_client_id: Optional[str] = None
     youtube_client_secret: Optional[str] = None
     youtube_refresh_token: Optional[str] = None
+    # Optional dedicated API key for YouTube Data API v3 (trending lookups).
+    # If not set, falls back to google_api_key — but that key's GCP project
+    # must have YouTube Data API v3 enabled.
+    youtube_data_api_key: Optional[str] = None
+
+    @property
+    def effective_youtube_data_api_key(self) -> str:
+        """Returns the best available key for YouTube Data API v3 calls."""
+        return self.youtube_data_api_key or self.google_api_key
 
     # ── Google Calendar ─────────────────────────────────────
     calendar_id: str = "primary"
     calendar_client_id: Optional[str] = None
     calendar_client_secret: Optional[str] = None
     calendar_refresh_token: Optional[str] = None
+
+    # ── Firebase Auth ──────────────────────────────────────────
+    firebase_api_key: str = ""           # Firebase Web API key (for client-side auth REST API)
+
+    # ── App Base URL ─────────────────────────────────────────
+    # Public base URL of this app (used for OAuth requestUri and callbacks).
+    # Set to your Cloud Run / production URL in production.
+    app_base_url: str = "http://localhost:8080"
 
     # ── App ──────────────────────────────────────────────────
     app_name: str = "youtube-content-pipeline"
@@ -79,19 +128,21 @@ class Settings(BaseSettings):
 
     @property
     def has_youtube(self) -> bool:
-        return bool(self.youtube_client_id and self.youtube_refresh_token)
+        return bool(self.youtube_client_id and self.youtube_client_secret)
 
     @property
     def has_calendar(self) -> bool:
-        return bool(self.calendar_client_id and self.calendar_refresh_token)
+        client_id = self.calendar_client_id or self.youtube_client_id
+        client_secret = self.calendar_client_secret or self.youtube_client_secret
+        return bool(client_id and client_secret and self.calendar_refresh_token)
 
     @property
     def has_elevenlabs(self) -> bool:
-        return bool(self.elevenlabs_api_key)
+        return bool(self.elevenlabs_api_key and self.elevenlabs_api_key.lower() not in ("none", ""))
 
     @property
     def has_tavily(self) -> bool:
-        return bool(self.tavily_api_key)
+        return bool(self.tavily_api_key and self.tavily_api_key.lower() not in ("none", ""))
 
     @property
     def has_firestore(self) -> bool:

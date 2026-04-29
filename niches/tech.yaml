@@ -1,0 +1,48 @@
+# Tech niche profile
+niche: tech
+display_name: Technology
+
+# Script style
+tone: "conversational, energetic, slightly nerdy — like explaining to a smart friend"
+pacing: "fast — 3 words per second, punchy sentences"
+hook_style: "open with a surprising stat or provocative question"
+cta: "Follow for daily tech insights"
+word_count_target: 160
+format: "hook (5s) → context (10s) → 3 key points (35s) → implication (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "clean, futuristic, dark backgrounds with neon accents, circuit board textures"
+color_palette: ["#00D4FF", "#7B2FBE", "#0A0A0A", "#FFFFFF"]
+mood: "innovative, fast-paced, mind-blowing"
+
+# Caption aesthetics
+caption_highlight_color: "#00D4FF"
+caption_font_weight: "bold"
+caption_style: "word-by-word cyan highlight on dark background"
+
+# Music
+music_mood: "electronic, upbeat, futuristic"
+music_energy: "high"
+music_bpm_range: [120, 145]
+
+# Voice
+voice_style: "clear, enthusiastic, slightly fast"
+voice_id: "en-US-AriaNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "latest AI technology breakthroughs this week"
+  - "new tech product launches this week"
+  - "AI startup funding news this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Tuesday"
+    hour_utc: 14
+    reason: "Tech professionals on lunch break (US EST 10am)"
+  - day: "Thursday"
+    hour_utc: 14
+    reason: "End-of-week tech news cycle"
+  - day: "Saturday"
+    hour_utc: 10
+    reason: "Weekend morning browsing"

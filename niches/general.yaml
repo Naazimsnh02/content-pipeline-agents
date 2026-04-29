@@ -1,0 +1,45 @@
+# General / fallback niche profile
+niche: general
+display_name: General
+
+# Script style
+tone: "engaging, curious, accessible to everyone"
+pacing: "medium"
+hook_style: "open with the most surprising fact"
+cta: "Follow for more"
+word_count_target: 155
+format: "hook → context → 3 points → takeaway → CTA"
+
+# Visual style
+visual_style: "clean, modern, versatile — bright and engaging"
+color_palette: ["#3498DB", "#E74C3C", "#FFFFFF", "#2C3E50"]
+mood: "engaging, informative, accessible"
+
+# Caption aesthetics
+caption_highlight_color: "#FFFF00"
+caption_font_weight: "bold"
+caption_style: "word-by-word yellow highlight on dark background"
+
+# Music
+music_mood: "upbeat, neutral, background"
+music_energy: "medium"
+music_bpm_range: [100, 120]
+
+# Voice
+voice_style: "clear, friendly, neutral"
+voice_id: "en-US-AriaNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "viral trending news this week"
+  - "interesting fact going viral"
+  - "trending topic this week"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Wednesday"
+    hour_utc: 14
+    reason: "Mid-week peak engagement"
+  - day: "Saturday"
+    hour_utc: 11
+    reason: "Weekend browsing peak"

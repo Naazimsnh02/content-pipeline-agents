@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/static/logo.png" />
+  <link rel="apple-touch-icon" href="/static/logo.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -88,17 +90,8 @@
     .logo-mark {
       width: 32px;
       height: 32px;
-      background: var(--gold);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-disp);
-      font-weight: 800;
-      font-size: 16px;
-      color: var(--bg);
-      letter-spacing: -0.5px;
       flex-shrink: 0;
+      object-fit: contain;
     }
     .logo-text {
       font-family: var(--font-disp);
@@ -884,7 +877,7 @@
   <!-- NAV -->
   <nav id="nav">
     <a href="/" class="nav-logo">
-      <div class="logo-mark">H</div>
+      <img src="/static/logo.png" class="logo-mark" alt="Hermes Logo" />
       <span class="logo-text">HERMES</span>
     </a>
     <ul class="nav-links">
@@ -908,8 +901,8 @@
       </h1>
       <p class="hero-desc reveal reveal-delay-2">
         Hermes is a 7-agent AI pipeline that takes a single sentence and delivers
-        a fully researched, scripted, produced, and scheduled YouTube Short —
-        with zero manual work.
+        a fully researched, A/B-tested, produced, and scheduled YouTube Short —
+        with burned-in captions, AI thumbnails, and Twitter/X content. Zero manual work.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
         <a href="/app" class="btn-primary">
@@ -1031,20 +1024,20 @@
       <div class="step-card reveal reveal-delay-2">
         <div class="step-num">03</div>
         <div class="step-emoji">📝</div>
-        <h3>Script Generation</h3>
-        <p>Writes hook-first, 60–75 second YouTube Shorts scripts optimized for your niche, tone, and creator profile. No filler, no fluff.</p>
+        <h3>A/B Script Generation</h3>
+        <p>Two competing scripts — stat-bomb vs curiosity-gap hooks — evaluated by Gemini. Winner goes to production. Twitter/X thread and long post generated alongside.</p>
       </div>
       <div class="step-card reveal reveal-delay-3">
         <div class="step-num">04</div>
         <div class="step-emoji">🎬</div>
         <h3>Video Production</h3>
-        <p>TTS voiceover with Edge TTS or ElevenLabs. AI image generation via Gemini Imagen. Assembled with ffmpeg and uploaded directly to YouTube.</p>
+        <p>TTS voiceover, AI-generated visuals with Ken Burns animation, Whisper captions burned in, background music with voice ducking, AI thumbnail — all assembled and uploaded.</p>
       </div>
       <div class="step-card reveal reveal-delay-4">
         <div class="step-num">05</div>
         <div class="step-emoji">📅</div>
         <h3>Smart Scheduling</h3>
-        <p>Finds the optimal publish time for your niche and audience. Creates a Google Calendar event and schedules the YouTube post automatically.</p>
+        <p>Finds the optimal publish time for your niche. Uploads to your connected YouTube channel and creates a Google Calendar reminder to set the video Public — all per-user via OAuth.</p>
       </div>
       <div class="step-card reveal reveal-delay-5">
         <div class="step-num">06</div>
@@ -1070,29 +1063,59 @@
         <p>Describe what you want in plain English. The coordinator agent understands intent, niche, deadline, and style — no form-filling required.</p>
       </div>
       <div class="feature-card reveal reveal-delay-1">
-        <div class="feature-icon">🧠</div>
-        <h3>Creator Profiles</h3>
-        <p>Every creator has a unique voice. Configure your niche, tone, pacing, call-to-action style, and TTS voice once — applied to every video.</p>
+        <div class="feature-icon">⚔️</div>
+        <h3>A/B Script Testing</h3>
+        <p>Two competing scripts — stat-bomb hook vs curiosity-gap hook — evaluated by Gemini on 5 criteria. Only the winner goes to production.</p>
       </div>
       <div class="feature-card reveal reveal-delay-2">
-        <div class="feature-icon">🔁</div>
-        <h3>Self-Improving</h3>
-        <p>The analytics agent feeds post-publish performance back into the topic scoring system. Topics that perform well get surfaced more often.</p>
+        <div class="feature-icon">🎬</div>
+        <h3>Ken Burns + Captions</h3>
+        <p>Animated zoom/pan visuals, word-level Whisper captions burned into video with niche-colored highlights, and background music with voice ducking.</p>
       </div>
       <div class="feature-card reveal reveal-delay-3">
-        <div class="feature-icon">☁️</div>
-        <h3>Fully Cloud-Native</h3>
-        <p>Runs on Google Cloud Run with Firestore storage. Scales to zero when idle. Deploy once, run forever. Integrates with Cloud Scheduler for cron jobs.</p>
+        <div class="feature-icon">🖼️</div>
+        <h3>AI Thumbnails</h3>
+        <p>Gemini generates a custom 16:9 thumbnail for every video with Pillow text overlay. Preview, download, or let it upload alongside your Short.</p>
       </div>
       <div class="feature-card reveal reveal-delay-4">
+        <div class="feature-icon">𝕏</div>
+        <h3>Multi-Platform Distribution</h3>
+        <p>Every pipeline run produces a YouTube Short, a Twitter/X thread (3–5 tweets), a long-form post, and relevant hashtags — all from one prompt.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-5">
+        <div class="feature-icon">🧠</div>
+        <h3>Creator Profiles</h3>
+        <p>Save your unique voice. Configure tone, pacing, hook style, and CTA once — applied to every video. Manage multiple profiles per account.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🎯</div>
+        <h3>16 Niche Profiles</h3>
+        <p>From tech to cooking to crypto — each niche has a YAML profile controlling script tone, visual style, color palette, music mood, and posting windows.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">🔗</div>
+        <h3>Per-User YouTube & Calendar</h3>
+        <p>Each user connects their own YouTube channel and Google Calendar via OAuth. Uploads go to your channel, events land on your calendar.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">📡</div>
+        <h3>Real-Time SSE Dashboard</h3>
+        <p>Server-Sent Events push every stage transition instantly to the UI. Watch your pipeline progress live — no polling, no refresh.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
         <div class="feature-icon">💬</div>
-        <h3>Interactive Chat Mode</h3>
-        <p>Ask questions, request research, get topic ideas, or run one-off scripts via the chat interface. The coordinator holds full context across the session.</p>
+        <h3>Persistent Chat</h3>
+        <p>Chat with the coordinator agent across sessions. Full history saved in Firestore — pick up where you left off, ask follow-ups, or brainstorm ideas.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-4">
+        <div class="feature-icon">🔁</div>
+        <h3>Self-Improving Analytics</h3>
+        <p>48h post-publish, the analytics agent fetches CTR, watch time, and engagement. Scores feed back into topic discovery — it learns what works.</p>
       </div>
       <div class="feature-card reveal reveal-delay-5">
         <div class="feature-icon">🔌</div>
-        <h3>Open API</h3>
-        <p>Every feature is exposed via clean REST endpoints. Build your own integrations, triggers, or workflows on top of the pipeline with full Swagger docs.</p>
+        <h3>Open REST API</h3>
+        <p>40+ endpoints covering auth, pipelines, chat, creator profiles, video management, analytics, and more. Build your own integrations on top.</p>
       </div>
     </div>
   </section>
@@ -1144,7 +1167,7 @@
           <span class="tag">RESEARCH</span> Found <span class="highlight">14 sources</span>, extracted key stats: Vision Pro sales decline 38%, Samsung Galaxy XR launch confirmed Q2...<br/><br/>
           <span class="tag">SCRIPT</span> Hook-first 72s script written. Opens: <em>"Samsung just made Apple's $3,499 headset look overpriced..."</em><br/><br/>
           <span class="tag">PRODUCTION</span> TTS generated (ElevenLabs · Rachel voice), 8 AI visuals created, video assembled at 1080×1920...<br/><br/>
-          <span class="tag">SCHEDULE</span> Optimal slot: <span class="highlight">Tuesday 9:14 AM EST</span>. Calendar event created. YouTube scheduled. ✓
+          <span class="tag">SCHEDULE</span> Optimal slot: <span class="highlight">Tuesday 9:14 AM EST</span>. Calendar reminder created. ✓
         </div>
       </div>
     </div>
@@ -1158,12 +1181,12 @@
         <div class="stat-label">Specialized AI Agents</div>
       </div>
       <div class="stat-item reveal reveal-delay-1">
-        <div class="stat-num">60s</div>
-        <div class="stat-label">Average pipeline run</div>
+        <div class="stat-num">16</div>
+        <div class="stat-label">Content Niches</div>
       </div>
       <div class="stat-item reveal reveal-delay-2">
-        <div class="stat-num">48h</div>
-        <div class="stat-label">Analytics feedback loop</div>
+        <div class="stat-num">40+</div>
+        <div class="stat-label">REST API Endpoints</div>
       </div>
       <div class="stat-item reveal reveal-delay-3">
         <div class="stat-num">∞</div>
@@ -1183,7 +1206,10 @@
       <div class="tech-pill"><div class="dot" style="background:#EA4335"></div> Cloud Run</div>
       <div class="tech-pill"><div class="dot" style="background:#FF0000"></div> YouTube API</div>
       <div class="tech-pill"><div class="dot" style="background:#0F9D58"></div> Google Calendar</div>
-      <div class="tech-pill"><div class="dot" style="background:var(--violet)"></div> ffmpeg + TTS</div>
+      <div class="tech-pill"><div class="dot" style="background:var(--violet)"></div> ffmpeg</div>
+      <div class="tech-pill"><div class="dot" style="background:#F48024"></div> ElevenLabs</div>
+      <div class="tech-pill"><div class="dot" style="background:#74AA9C"></div> Whisper</div>
+      <div class="tech-pill"><div class="dot" style="background:#E85555"></div> Firebase Auth</div>
     </div>
   </section>
 
@@ -1207,7 +1233,7 @@
   <footer>
     <div class="footer-left">
       <a href="/" class="nav-logo" style="text-decoration:none;">
-        <div class="logo-mark">H</div>
+        <div class="logo-mark"><img src="/static/logo.png" style="width:32px;height:32px;object-fit:contain;" alt="Hermes" /></div>
         <span class="logo-text">HERMES</span>
       </a>
       <ul class="footer-links">

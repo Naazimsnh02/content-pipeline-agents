@@ -1,0 +1,48 @@
+# Fitness niche profile
+niche: fitness
+display_name: Fitness & Health
+
+# Script style
+tone: "motivating, direct, backed by science"
+pacing: "energetic — match the workout vibe"
+hook_style: "open with a myth-busting statement"
+cta: "Follow for science-backed fitness tips"
+word_count_target: 150
+format: "hook (5s) → myth/problem (10s) → solution with 3 steps (35s) → motivation (8s) → CTA (5s)"
+
+# Visual style
+visual_style: "high-contrast, athletic, dynamic motion blur, gym and outdoor settings"
+color_palette: ["#FF4500", "#FF8C00", "#1C1C1C", "#FFFFFF"]
+mood: "energetic, motivating, powerful"
+
+# Caption aesthetics
+caption_highlight_color: "#FF4500"
+caption_font_weight: "extrabold"
+caption_style: "word-by-word orange highlight, bold athletic font"
+
+# Music
+music_mood: "pump-up, high-energy, motivational"
+music_energy: "very high"
+music_bpm_range: [130, 160]
+
+# Voice
+voice_style: "energetic, motivating, direct"
+voice_id: "en-US-DavisNeural"
+
+# Search queries for topic discovery
+search_queries:
+  - "viral fitness health trends this week"
+  - "workout science study this week"
+  - "fitness myth debunked viral"
+
+# Optimal posting windows (UTC)
+posting_windows:
+  - day: "Monday"
+    hour_utc: 9
+    reason: "New week motivation peak"
+  - day: "Sunday"
+    hour_utc: 11
+    reason: "Weekend workout planning"
+  - day: "Wednesday"
+    hour_utc: 12
+    reason: "Mid-week motivation boost"

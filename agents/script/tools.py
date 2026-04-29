@@ -1,51 +1,16 @@
 """
 Script Agent tools — loads creator style from Firestore and saves generated scripts.
 The script writing itself is done by the Gemini LLM in the agent's instruction.
+Includes A/B variant evaluation for hook optimisation.
 """
 from __future__ import annotations
 import logging
 
 from shared.config import settings
 from shared.database import db
+from shared.niches import get_script_style
 
 logger = logging.getLogger(__name__)
-
-# ── Default niche styles (used when no Firestore entry exists) ───────────────
-
-_DEFAULT_STYLES: dict[str, dict] = {
-    "tech": {
-        "tone": "conversational, energetic, slightly nerdy — like explaining to a smart friend",
-        "pacing": "fast — 3 words per second, punchy sentences",
-        "hook_style": "open with a surprising stat or provocative question",
-        "cta": "Follow for daily tech insights",
-        "word_count_target": 160,
-        "format": "hook (5s) → context (10s) → 3 key points (35s) → implication (8s) → CTA (5s)",
-    },
-    "finance": {
-        "tone": "clear, authoritative, relatable — no jargon without explanation",
-        "pacing": "medium — deliberate, let numbers land",
-        "hook_style": "open with a money stat that feels unreal",
-        "cta": "Follow for daily money insights",
-        "word_count_target": 150,
-        "format": "hook (5s) → problem (10s) → 3 actionable tips (35s) → takeaway (8s) → CTA (5s)",
-    },
-    "fitness": {
-        "tone": "motivating, direct, backed by science",
-        "pacing": "energetic — match the workout vibe",
-        "hook_style": "open with a myth-busting statement",
-        "cta": "Follow for science-backed fitness tips",
-        "word_count_target": 150,
-        "format": "hook (5s) → myth/problem (10s) → solution with 3 steps (35s) → motivation (8s) → CTA (5s)",
-    },
-    "general": {
-        "tone": "engaging, curious, accessible to everyone",
-        "pacing": "medium",
-        "hook_style": "open with the most surprising fact",
-        "cta": "Follow for more",
-        "word_count_target": 155,
-        "format": "hook → context → 3 points → takeaway → CTA",
-    },
-}
 
 
 # ── Tools ────────────────────────────────────────────────────────────────────
@@ -76,13 +41,13 @@ def get_creator_style(creator_id: str = "default", niche: str = "tech") -> dict:
             "source": "firestore",
         }
 
-    # Fall back to niche default
-    style = _DEFAULT_STYLES.get(niche, _DEFAULT_STYLES["general"])
+    # Fall back to YAML niche profile
+    style = get_script_style(niche)
     return {
         "creator_id": creator_id,
         **style,
-        "source": "default",
-        "note": f"No custom profile for '{creator_id}', using default '{niche}' style.",
+        "source": "niche_profile",
+        "note": f"No custom profile for '{creator_id}', using '{niche}' niche profile.",
     }
 
 
@@ -98,6 +63,7 @@ def save_script(
     youtube_tags: list[str],
     creator_id: str = "default",
     platform: str = "youtube_shorts",
+    pipeline_job_id: str = "",
 ) -> dict:
     """
     Save the generated script to Firestore.
@@ -114,6 +80,7 @@ def save_script(
         youtube_tags: List of YouTube tags for discoverability.
         creator_id: Creator profile used.
         platform: "youtube_shorts" | "youtube_long" | "instagram_reel".
+        pipeline_job_id: The pipeline job ID — links this script back to the originating job.
 
     Returns:
         A dict with the saved script_id.
@@ -137,6 +104,7 @@ def save_script(
         word_count=word_count,
         estimated_duration_s=estimated_duration,
         creator_id=creator_id,
+        pipeline_job_id=pipeline_job_id or None,
     )
     db.save("scripts", script.id, script.model_dump(mode="json"))
     return {
@@ -148,3 +116,122 @@ def save_script(
         "saved": True,
         "message": f"Script saved ({word_count} words, ~{estimated_duration}s). Ready for production.",
     }
+
+
+def save_twitter_content(
+    script_id: str,
+    thread_tweets: list[str],
+    long_post: str,
+    hashtags: list[str],
+    pipeline_job_id: str = "",
+) -> dict:
+    """
+    Save generated Twitter/X content (thread + long post) to Firestore.
+
+    Args:
+        script_id: The script this content is derived from.
+        thread_tweets: List of 3-5 tweets, each ≤280 characters.
+        long_post: A 500-1000 character long-form X post.
+        hashtags: List of relevant hashtags (without #).
+        pipeline_job_id: The pipeline job ID — links this content back to the originating job.
+
+    Returns:
+        A dict with the saved twitter_content_id.
+    """
+    from shared.models import TwitterContent
+
+    # Enforce 280-char limit per tweet
+    trimmed = [t[:280] for t in thread_tweets]
+
+    content = TwitterContent(
+        script_id=script_id,
+        thread_tweets=trimmed,
+        long_post=long_post[:1000],
+        hashtags=hashtags[:10],
+        pipeline_job_id=pipeline_job_id or None,
+    )
+    db.save("twitter_content", content.id, content.model_dump(mode="json"))
+    return {
+        "twitter_content_id": content.id,
+        "script_id": script_id,
+        "tweet_count": len(trimmed),
+        "saved": True,
+        "message": f"Twitter content saved: {len(trimmed)} tweets + long post.",
+    }
+
+
+def evaluate_hook_ab(
+    hook_a: str,
+    hook_b: str,
+    script_a: str,
+    script_b: str,
+    niche: str,
+    topic_title: str,
+) -> dict:
+    """
+    Evaluate two script variants (A/B) and pick the winner based on hook strength,
+    retention potential, and niche fit. Uses Gemini to score both variants.
+
+    Args:
+        hook_a: The opening hook line of Variant A.
+        hook_b: The opening hook line of Variant B.
+        script_a: Full script text of Variant A.
+        script_b: Full script text of Variant B.
+        niche: Content niche for context.
+        topic_title: The topic being scripted.
+
+    Returns:
+        A dict with winner ("A" or "B"), scores for each, and reasoning.
+    """
+    import google.genai as genai
+
+    prompt = f"""You are a YouTube Shorts retention expert. Evaluate these two script variants for a {niche} Short about "{topic_title}".
+
+## Variant A
+Hook: "{hook_a}"
+Full script:
+{script_a}
+
+## Variant B
+Hook: "{hook_b}"
+Full script:
+{script_b}
+
+## Scoring Criteria (1-10 each)
+1. **Hook Power**: Does the first line stop the scroll? Curiosity gap? Shock value?
+2. **Retention Flow**: Will viewers stay past 3s? Past 15s? Past 30s?
+3. **Niche Fit**: Does the tone/style match the {niche} audience?
+4. **CTA Strength**: Will viewers follow/like/comment?
+5. **Shareability**: Would someone send this to a friend?
+
+Respond in EXACTLY this JSON format (no markdown, no extra text):
+{{"winner": "A" or "B", "score_a": {{"hook_power": N, "retention": N, "niche_fit": N, "cta": N, "shareability": N, "total": N}}, "score_b": {{"hook_power": N, "retention": N, "niche_fit": N, "cta": N, "shareability": N, "total": N}}, "reasoning": "one sentence why the winner is better"}}"""
+
+    try:
+        client = genai.Client()
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=prompt,
+        )
+        text = response.text.strip()
+        # Strip markdown fences if present
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+
+        import json
+        result = json.loads(text)
+        result["evaluated"] = True
+        return result
+    except Exception as exc:
+        logger.warning("A/B evaluation failed: %s — defaulting to Variant A", exc)
+        return {
+            "winner": "A",
+            "score_a": {"total": 0},
+            "score_b": {"total": 0},
+            "reasoning": f"Evaluation failed ({exc}), defaulting to Variant A.",
+            "evaluated": False,
+            "error": str(exc),
+        }
